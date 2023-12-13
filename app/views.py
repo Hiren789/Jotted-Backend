@@ -1,7 +1,7 @@
 from flask import request, jsonify
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
 from app import app, db
-from app.models import User, Institute, UserInstitute, Plans
+from app.models import User, Institute, UserInstitute
 import secrets
 
 # RESPONSE CLASS
@@ -24,9 +24,15 @@ class APIResponse:
         }
         return jsonify(response), status_code
 
+def check_data(data, required_fields):
+    for chk in required_fields:
+        if chk not in data:
+            return APIResponse.error(f"{chk.title()} is required", 400)
+    return None
 
 @app.route('/')
 def hello():
+    print(User.query.get(1).get_access_id(4))
     return 'Hello, World!'
 
 # Signup API
@@ -39,7 +45,7 @@ def signup():
     if user:
         return APIResponse.error("This Email or Phone Number is associated with an Existing Account", 409)
     else:
-        new_user = User(**data, plan=1)
+        new_user = User(**data)
         new_user.set_password(data.get('pw'))
         db.session.add(new_user)
         db.session.commit()
@@ -63,36 +69,23 @@ def signin():
                 return APIResponse.error("Email or Password is incorrect", 400)
     else:
         return APIResponse.error("Email and Password are required", 400)
-
-def check_data(data, required_fields):
-    for chk in required_fields:
-        if chk not in data:
-            return APIResponse.error(f"{chk.title()} is required", 400)
-    return None
-
-def check_plan_perm(user, data):
-    plan = user.plan
-    if not plan:
-        return APIResponse.error(f"User has no active plan", 400)
-    if "add" in data:
-        if data.get("add") == "institute":
-            user_plan = Plans.query.get(user.plan)
-            already_used = len(Institute.query.filter_by(user_id = user.id).all())
-            if already_used >= user_plan.perm.get("institute"):
-                return APIResponse.error(f"User's current plan has no capacity to add new institute", 400)
-    if "institute" in data:
-        chk_perm = data.get("institute")
-        institute = Institute.query.get(chk_perm.get('id'))
-        if not institute:
-            return APIResponse.error("Institute not found for given id", 400)
-        if institute.user_id != user.id:
-            userinst = UserInstitute.query.filter((UserInstitute.user_id == user.id) & (UserInstitute.ins_id == chk_perm.get('id'))).first()
-            if not userinst:
-                return APIResponse.error(f"User has no access to given institute", 400)
-            if chk_perm.get("role") == 1:
-                if userinst.role != 1:
-                    return APIResponse.error(f"User has no admin access to given institute", 400)
-    return None
+    
+# Set Payment Plan
+@app.route('/set_payment', methods=['POST'])
+@jwt_required()
+def set_payment():
+    current_user = get_jwt_identity()
+    data = request.get_json()
+    plan = data.get('plan')
+    user = User.query.get(current_user)
+    if not user:
+        return APIResponse.error("Couldn't find a user account", 400)
+    if plan:
+        user.plan = plan
+        db.session.commit()
+        return APIResponse.success("Plan updated successfully", 200)
+    else:
+        return APIResponse.error("Plan is required", 400)
 
 def random_token(length=16):
     token = secrets.token_hex(length // 2)
@@ -107,12 +100,16 @@ def add_institute():
     user = User.query.get(current_user)
     if not user:
         return APIResponse.error("User not found", 400)
-    cup = check_plan_perm(user, {"add":"institute"})
-    if cup: return cup
-    mfr = check_data(data, ['name', 'campus_type', 'address', 'district', 'state', 'country', 'zipcode'])
+    mfr = check_data(data, ['name', 'campus_type', 'address', 'district', 'state', 'country', 'zipcode', "ins_type"])
     if mfr: return mfr
-    new_institute = Institute(user_id=current_user, **data)
+    usedcnt = user.get_institutes(cnt=True, role_id=0)
+    if usedcnt >= user.plan[str(data.get("ins_type"))]["c"]:
+        return APIResponse.error(f"User's current plan has no capacity to add new institute", 400)
+    new_institute = Institute(user_id=user.id, **data)
     db.session.add(new_institute)
+    db.session.commit()
+    new_user_institute = UserInstitute(user_id=user.id, ins_id=new_institute.id, role_id=0)
+    db.session.add(new_user_institute)
     db.session.commit()
     return APIResponse.success("Institute added successfully", 201)
 
@@ -123,8 +120,7 @@ def get_institutes():
     user = User.query.get(current_user)
     if not user:
         return APIResponse.error("User not found", 400)
-    insss = Institute.query.filter_by(user_id = user.id).all()
-    data = [x.ie_to_json() for x in insss]
+    data = user.get_institutes()
     return APIResponse.success("Success", 201, data=data)
 
 @app.route('/edit_institute', methods=['POST'])
@@ -135,8 +131,8 @@ def edit_institute():
     user = User.query.get(current_user)
     if not user:
         return APIResponse.error("User not found", 400)
-    cup = check_plan_perm(user, {"institute":{"id":data.get("id"), "role": 1}})
-    if cup: return cup
+    if user.get_access_id(data.get("id")) not in [0,1]:
+        return APIResponse.error("User has no access to modify this institute", 403)    
     inst = Institute.query.get(data.get("id"))
     if "user_id" in data:
         return APIResponse.error("User ID can not be updated", 400)
@@ -153,8 +149,8 @@ def remove_institute():
     user = User.query.get(current_user)
     if not user:
         return APIResponse.error("User not found", 400)
-    cup = check_plan_perm(user, {"institute":{"id":data.get("id"), "role": 1}})
-    if cup: return cup
+    if user.get_access_id(data.get("id")) != 0:
+        return APIResponse.error("User has no access to remove this institute", 403)
     db.session.query(UserInstitute).filter_by(ins_id=data.get("id")).delete()
     inst = Institute.query.get(data.get("id"))
     db.session.delete(inst)
@@ -170,19 +166,21 @@ def send_institute_invite():
     user = User.query.get(current_user)
     if not user:
         return APIResponse.error("User not found", 400)
-    mfr = check_data(data, ['ins_id', 'email', 'role'])
+    mfr = check_data(data, ['ins_id', 'email', 'role_id'])
     if mfr: return mfr    
+    if data.get('role_id') not in [1,2,'1','2']:
+        return APIResponse.error("Invalid value for Role ID", 403)
     institute = Institute.query.get(data.get('ins_id'))
     if not institute:
         return APIResponse.error("Institute not found", 400)
-    cup = check_plan_perm(user, {"institute":{"id":data.get("ins_id"), "role": 1}})
-    if cup: return cup
+    if user.get_access_id(data.get("ins_id")) not in [0,1]:
+        return APIResponse.error("User has no access to add members to this institute", 403)
     token = random_token()
-    new_invite = UserInstitute(ins_id = data.get('ins_id'), role = data.get('role'), token = token)
+    new_invite = UserInstitute(ins_id = data.get('ins_id'), role_id = data.get('role_id'), token = token)
     db.session.add(new_invite)
     db.session.commit()
     # SEND INVITE THORUGH EMAIL WITH INVITE CODE
-    return APIResponse.success("Sent invite successfully", 201)
+    return APIResponse.success("Sent invite successfully", 201, invite_code=token)
 
 @app.route('/accept_institute_invite', methods=['POST'])
 @jwt_required()
@@ -197,7 +195,17 @@ def accept_institute_invite():
     reqq = UserInstitute.query.filter_by(token = data.get('token')).first()
     if not reqq:
         return APIResponse.error("Invitation Not found", 400)
-    reqq.user_id = user.id
-    reqq.token = None
-    db.session.commit()
-    return APIResponse.success("Request Accepted successfully", 201)
+    existingrel = UserInstitute.query.filter(UserInstitute.user_id == user.id, UserInstitute.ins_id == reqq.ins_id).first()
+    if existingrel:
+        if reqq.role_id < existingrel.role_id:
+            db.session.delete(reqq)
+            existingrel.role_id = reqq.role_id            
+            db.session.commit()
+            return APIResponse.success("Account Upgraded successfully", 201)
+        else:
+            return APIResponse.error("You are already a team member of this institute", 409)
+    else:
+        reqq.user_id = user.id
+        reqq.token = None
+        db.session.commit()
+        return APIResponse.success("Request Accepted successfully", 201)
