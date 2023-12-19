@@ -226,11 +226,11 @@ def get_price_plan():
                 1: {"m": 1, "1y": 0.9, "2y": 0.85, "3y": 0.8},
                 2: {"m": 1, "1y": 12, "2y": 24, "3y": 36}}
     if it not in pricing:
-        return "Invalid institute type"
+        return APIResponse.success("Success", 200, data="Invalid institute type") 
     if s not in pricing[it]["s"]:
-        return "Invalid Students count"
+        return APIResponse.success("Success", 200, data="Invalid Students count") 
     if d not in discounts[it]:
-        return "Invalid Duration"
+        return APIResponse.success("Success", 200, data="Invalid Duration")
     k = discounts[it][d]
     price = pricing[it]["s"][s]
     if it == 1:
