@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Request Page</title>
+</head>
+<body>
+
+    <h1>API Request Form</h1>
+
+    <form id="apiForm">
+        <label for="instituteType">Institute Type:</label>
+        <select id="instituteType" name="instituteType">
+            <option value="0">Individual</option>
+            <option value="1">Team</option>
+        </select><br>
+
+        <label for="students">Students:</label>
+        <select id="students" name="students">
+            <option value="30">30</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="250">250</option>
+            <option value="500">500</option>
+            <option value="1000">1000</option>
+            <option value="1500">1500</option>
+            <option value="2000">2000</option>
+            <option value="2500">2500</option>
+            <option value="3000">3000</option>
+            <option value="3500">3500</option>
+            <option value="4000">4000</option>
+            <option value="4500">4500</option>
+            <option value="5000">5000</option>
+            <option value="6000">6000</option>
+            <option value="7000">7000</option>
+            <option value="8000">8000</option>
+            <option value="9000">9000</option>
+            <option value="10000">10000</option>
+            <option value="12500">12500</option>
+            <option value="15000">15000</option>
+            <option value="10000000">Unlimited</option>
+        </select><br>
+
+        <label for="teamMembers">Team Members:</label>
+        <select id="teamMembers" name="teamMembers">
+            <option value="5">5</option>
+            <option value="8">8</option>
+            <option value="10">10</option>
+            <option value="15">15</option>
+            <option value="25">25</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+            <option value="75">75</option>
+            <option value="100">100</option>
+            <option value="125">125</option>
+            <option value="150">150</option>
+            <option value="10000000">Unlimited</option>
+        </select><br>
+
+        <label for="duration">Duration:</label>
+        <select id="duration" name="duration">
+            <option value="m">1 Month</option>
+            <option value="1y">1 Year</option>
+            <option value="2y">2 Years</option>
+            <option value="3y">3 Years</option>
+        </select><br>
+
+        <button type="button" onclick="sendRequest()">Submit</button>
+    </form>
+
+    <div id="responseContainer">
+        <!-- Display API response here -->
+    </div>
+
+    <script>
+        function sendRequest() {
+            // Replace 'YOUR_API_ENDPOINT' with the actual API endpoint
+            const apiEndpoint = 'https://backend.jottedonline.com/get_price_plan';
+            
+            // Get values from form fields
+            const it = document.getElementById('instituteType').value;
+            const s = document.getElementById('students').value;
+            const t = document.getElementById('teamMembers').value;
+            const d = document.getElementById('duration').value;
+
+            // Create request payload
+            const payload = { it, s, t, d };
+
+            // Send the request to the API endpoint (using a placeholder for simplicity)
+            fetch(apiEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Display the API response in the responseContainer
+                document.getElementById('responseContainer').innerHTML = JSON.stringify(data, null, 2);
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+
+</body>
+</html>
