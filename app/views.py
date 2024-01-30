@@ -39,11 +39,12 @@ def hello():
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
-    mfr = check_data(data, ['pre', 'fn', 'mn', 'ln', 'suf', 'email', 'pw'])
+    # mfr = check_data(data, ['pre', 'fn', 'mn', 'ln', 'suf', 'email', 'pw'])
+    mfr = check_data(data, ['email', 'pw'])
     if mfr: return mfr
-    user = User.query.filter((User.email == data.get('email')) | (User.pn == data.get('pn'))).first()
+    user = User.query.filter(User.email == data.get('email')).first()
     if user:
-        return APIResponse.error("This Email or Phone Number is associated with an Existing Account", 409)
+        return APIResponse.error("This Email is associated with an Existing Account", 409)
     else:
         new_user = User(**data)
         new_user.set_password(data.get('pw'))
@@ -64,7 +65,7 @@ def signin():
         else:
             if user.check_password(pw):
                 access_token = create_access_token(identity=user.id)
-                return APIResponse.success("Signin successful", 200, access_token=access_token)
+                return APIResponse.success("Signin successful", 200, access_token=access_token, pro_com=user.pro_com)
             else:
                 return APIResponse.error("Email or Password is incorrect", 400)
     else:
@@ -226,16 +227,16 @@ def get_price_plan():
                 1: {"m": 1, "1y": 0.9, "2y": 0.85, "3y": 0.8},
                 2: {"m": 1, "1y": 12, "2y": 24, "3y": 36}}
     if it not in pricing:
-        return APIResponse.success("Success", 200, data="Invalid institute type") 
+        return APIResponse.success("Success", 422, data="Invalid institute type") 
     if s not in pricing[it]["s"]:
-        return APIResponse.success("Success", 200, data="Invalid Students count") 
+        return APIResponse.success("Success", 422, data="Invalid Students count") 
     if d not in discounts[it]:
-        return APIResponse.success("Success", 200, data="Invalid Duration")
+        return APIResponse.success("Success", 422, data="Invalid Duration")
     k = discounts[it][d]
     price = pricing[it]["s"][s]
     if it == 1:
         if t not in pricing[it]["sa"]:
-            return "Invalid Team Member Count"
+            return APIResponse.success("Success", 422, data="Invalid Team Member Count")
         if pricing[it]["sf"][s] <= t:
             price += 1000 if t == 10000000 else (
                 t-pricing[it]["sf"][s])*pricing[it]["sa"][pricing[it]["sf"][s]]

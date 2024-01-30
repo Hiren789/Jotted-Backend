@@ -12,6 +12,7 @@ class User(db.Model):
     pn = db.Column(db.String(15), index=True, unique=True)
     pw = db.Column(db.String(128))
     plan = db.Column(db.JSON)
+    pro_com = db.Column(db.Integer, default=0)
 
     def get_institutes(self, cnt=False, role_id=None):
         query = (
@@ -58,3 +59,7 @@ class UserInstitute(db.Model):
     ins_id = db.Column(db.Integer, db.ForeignKey('institute.id'))
     role_id = db.Column(db.Integer, default=2)
     token = db.Column(db.String(16))
+
+class Students(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ins_id = db.Column(db.Integer, db.ForeignKey('institute.id'))
