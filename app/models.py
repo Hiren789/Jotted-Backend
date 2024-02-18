@@ -1,5 +1,7 @@
 from app import db
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import func
+from app.utils import APIResponse
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -29,7 +31,7 @@ class User(db.Model):
     
     def get_access_id(self, ins_id):
         reqq = UserInstitute.query.filter(UserInstitute.user_id == self.id, UserInstitute.ins_id == ins_id).first()
-        return -1 if reqq is None else reqq.role_id        
+        return (-1, []) if reqq is None else (reqq.role_id, reqq.students)
 
     def set_password(self, password):
         self.pw = generate_password_hash(password, method = "pbkdf2:sha256")
@@ -49,17 +51,83 @@ class Institute(db.Model):
     country = db.Column(db.String(64))
     zipcode = db.Column(db.String(16))
     ins_type = db.Column(db.Integer)
+    campus_grade = db.Column(db.JSON)
 
     def ie_to_json(self):
-        return {'id':self.id, 'name':self.name, 'campus_type':self.campus_type, 'address':self.address, 'district':self.district, 'city':self.city, 'state':self.state, 'country':self.country, 'zipcode':self.zipcode, 'ins_type':self.ins_type}
+        return {'id':self.id, 'name':self.name, 'campus_type':self.campus_type, 'address':self.address, 'district':self.district, 'city':self.city, 'state':self.state, 'country':self.country, 'zipcode':self.zipcode, 'ins_type':self.ins_type, 'campus_grade':self.campus_grade}
+    
+    def get_plan(self):
+        owneruserins = db.session.query(UserInstitute).filter((UserInstitute.ins_id==self.id) & (UserInstitute.role_id==0)).first()
+        return User.query.get(owneruserins.user_id).plan
+    
+    def cgexists(self, campus, grade):
+        if campus not in self.campus_grade:
+            return APIResponse.error(f"Campus not found in Institute Plan", 400)
+        if grade not in self.campus_grade[campus]:
+            return APIResponse.error(f"Grade not found in Institute and Campus Plan", 400)
+    
+    def verify_campus_grades(self, given_campus_grade):
+        students = db.session.query(Student.campus_id,Student.grade).filter_by(ins_id = self.id).all()
+        tmpvgs = {}
+        for i in students:
+            if i[1] not in tmpvgs.get(i[0],[]):
+                tmpvgs[i[0]] = tmpvgs.get(i[0],[])+[i[1]]
+        for i in tmpvgs:
+            if i not in given_campus_grade:
+                return APIResponse.error(f"Already used Campus {i} not found in new data", 400)
+            else:
+                for j in tmpvgs[i]:
+                    if j not in given_campus_grade[i]:
+                        return APIResponse.error(f"Already used grade {j} not found in Campus {i} in new data", 400)
+        return None
+    
+    def get_students(self, cnt=False, stnds = None):
+        students = db.session.query(Student).filter(Student.id.in_(stnds)).all() if stnds else db.session.query(Student).filter_by(ins_id = self.id).all()
+        return len(students) if cnt else [student.se_to_json() for student in students]
 
 class UserInstitute(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     ins_id = db.Column(db.Integer, db.ForeignKey('institute.id'))
     role_id = db.Column(db.Integer, default=2)
+    students = db.Column(db.JSON)
     token = db.Column(db.String(16))
 
-class Students(db.Model):
+class Student(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    first_name = db.Column(db.String(32))
+    middle_name = db.Column(db.String(32))
+    last_name = db.Column(db.String(32))
+    suffix = db.Column(db.String(8))
+    gender = db.Column(db.String(16))
+    email = db.Column(db.String(32))
+    phone = db.Column(db.String(32))
+    zipcode = db.Column(db.String(6))
+    state = db.Column(db.String(32))
+    country = db.Column(db.String(32))
+    city = db.Column(db.String(32))
+    extra_info = db.Column(db.JSON)
+
     ins_id = db.Column(db.Integer, db.ForeignKey('institute.id'))
+    campus_id = db.Column(db.String(64))
+    grade = db.Column(db.String(16))
+
+    def se_to_json(self):
+        return {'id':self.id, 'ins_id':self.ins_id}
+    
+    def set_team_member_acess(self, usrs):        
+        exiusrs = {x.user_id:x for x in db.session.query(UserInstitute).filter((UserInstitute.ins_id == self.ins_id) & (UserInstitute.role_id == 2)).filter(func.json_contains(UserInstitute.students, str(self.id))).all()}
+        delusrs = [x for x in exiusrs if x not in usrs]
+        newusrs = [x for x in usrs if x not in exiusrs]
+        
+        for key, stund in exiusrs.items():
+            if key in delusrs:
+                tmpstnds = list(set(stund.students))
+                tmpstnds.remove(self.id)
+                stund.students = tmpstnds
+
+        newusrs = UserInstitute.query.filter((UserInstitute.user_id.in_(newusrs)) & (UserInstitute.ins_id == self.ins_id) & (UserInstitute.role_id == 2))
+        for k in newusrs:
+            k.students = k.students+[self.id]
+        
+        db.session.commit()
