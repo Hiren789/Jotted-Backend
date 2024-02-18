@@ -113,10 +113,13 @@ class Student(db.Model):
     grade = db.Column(db.String(16))
 
     def se_to_json(self):
-        return {'id':self.id, 'ins_id':self.ins_id}
+        return {'id':self.id, 'ins_id':self.ins_id, 'team_member': [x.user_id for x in self.get_team_members()]}
     
-    def set_team_member_acess(self, usrs):        
-        exiusrs = {x.user_id:x for x in db.session.query(UserInstitute).filter((UserInstitute.ins_id == self.ins_id) & (UserInstitute.role_id == 2)).filter(func.json_contains(UserInstitute.students, str(self.id))).all()}
+    def get_team_members(self):
+        return db.session.query(UserInstitute).filter((UserInstitute.ins_id == self.ins_id) & (UserInstitute.role_id == 2)).filter(func.json_contains(UserInstitute.students, str(self.id))).all()
+
+    def set_team_member_acess(self, usrs):
+        exiusrs = {x.user_id:x for x in self.get_team_members()}
         delusrs = [x for x in exiusrs if x not in usrs]
         newusrs = [x for x in usrs if x not in exiusrs]
         
@@ -131,3 +134,15 @@ class Student(db.Model):
             k.students = k.students+[self.id]
         
         db.session.commit()
+
+class Todo(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    body = db.Column(db.Text)
+    priority = db.Column(db.Integer)
+    due = db.Column(db.DateTime)
+    students = db.Column(db.JSON)
+    members = db.Column(db.JSON)
+
+    def td_to_json(self):
+        return {'id': self.id,'title': self.title,'body': self.body,'priority': self.priority,'due': self.due.isoformat() if self.due else None,'students': self.students,'members': self.members}

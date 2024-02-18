@@ -1,8 +1,9 @@
 from flask import request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from app import app, db
-from app.models import User, Institute, UserInstitute
+from app.models import User, Institute, UserInstitute, Student
 from app.utils import APIResponse, check_data, random_token
+from app.security import access_control
 
 @app.route('/add_institute', methods=['POST'])
 @jwt_required()
@@ -27,24 +28,15 @@ def add_institute():
 
 @app.route('/get_institutes', methods=['GET'])
 @jwt_required()
-def get_institutes():
-    current_user = get_jwt_identity()
-    user = User.query.get(current_user)
-    if not user:
-        return APIResponse.error("User not found", 400)
+@access_control()
+def get_institutes(user):
     data = user.get_institutes()
     return APIResponse.success("Success", 201, data=data)
 
 @app.route('/edit_institute', methods=['POST'])
 @jwt_required()
-def edit_institute():
-    current_user = get_jwt_identity()
-    data = request.get_json()
-    user = User.query.get(current_user)
-    if not user:
-        return APIResponse.error("User not found", 400)
-    if user.get_access_id(data.get("id"))[0] not in [0,1]:
-        return APIResponse.error("User has no access to modify this institute", 403)    
+@access_control(ins_id=[0,1])
+def edit_institute(user, data):
     inst = Institute.query.get(data.get("id"))
     if "user_id" in data:
         return APIResponse.error("User ID can not be updated", 400)
@@ -58,15 +50,10 @@ def edit_institute():
 
 @app.route('/remove_institute', methods=['DELETE'])
 @jwt_required()
-def remove_institute():
-    current_user = get_jwt_identity()
-    data = request.get_json()
-    user = User.query.get(current_user)
-    if not user:
-        return APIResponse.error("User not found", 400)
-    if user.get_access_id(data.get("id"))[0] != 0:
-        return APIResponse.error("User has no access to remove this institute", 403)
+@access_control(ins_id=[0])
+def remove_institute(user, data):
     db.session.query(UserInstitute).filter_by(ins_id=data.get("id")).delete()
+    db.session.query(Student).filter_by(ins_id=data.get("id")).delete()
     inst = Institute.query.get(data.get("id"))
     db.session.delete(inst)
     db.session.commit()
