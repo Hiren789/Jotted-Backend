@@ -38,7 +38,7 @@ def get_institutes(user):
 @access_control(ins_id=[0,1])
 def get_institutes_normal_users(user, data):
     usrids = [x.user_id for x in db.session.query(UserInstitute).filter((UserInstitute.ins_id==data.get("id"))&(UserInstitute.role_id==2)).all()]
-    usrs = {x.id:f"{x.fn} {x.ln}" for x in db.session.query(User).filter((User.id.in_(usrids))&(User.fn!=None)).all()}
+    usrs = {x.id:(f"{x.fn} {x.ln}" if x.fn else None) for x in db.session.query(User).filter((User.id.in_(usrids))).all()}
     return APIResponse.success("Success", 201, data=usrs)
 
 @app.route('/edit_institute', methods=['POST'])
