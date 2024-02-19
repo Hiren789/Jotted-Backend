@@ -164,3 +164,9 @@ class Todo(db.Model):
 
     def td_to_json(self):
         return {'id': self.id,'title': self.title,'body': self.body,'priority': self.priority,'due': self.due.isoformat() if self.due else None,'students': self.students,'members': self.members}
+
+class City(db.Model):
+    __tablename__ = 'cities'
+    id = db.Column(db.BigInteger, primary_key=True)
+    state = db.Column(db.String(32))
+    city = db.Column(db.String(32))
