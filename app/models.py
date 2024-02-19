@@ -113,7 +113,25 @@ class Student(db.Model):
     grade = db.Column(db.String(16))
 
     def se_to_json(self):
-        return {'id':self.id, 'ins_id':self.ins_id, 'team_member': [x.user_id for x in self.get_team_members()]}
+        return {
+            'id':self.id, 
+            'ins_id':self.ins_id, 
+            'team_member': [x.user_id for x in self.get_team_members()],
+            'campus_id': self.campus_id,
+            'grade': self.grade,            
+            'first_name': self.first_name,
+            'middle_name': self.middle_name,
+            'last_name': self.last_name,
+            'suffix': self.suffix,
+            'gender': self.gender,
+            'email': self.email,
+            'phone': self.phone,
+            'zipcode': self.zipcode,
+            'state': self.state,
+            'country': self.country,
+            'city': self.city,
+            'extra_info': self.extra_info
+        }
     
     def get_team_members(self):
         return db.session.query(UserInstitute).filter((UserInstitute.ins_id == self.ins_id) & (UserInstitute.role_id == 2)).filter(func.json_contains(UserInstitute.students, str(self.id))).all()
