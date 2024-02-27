@@ -15,7 +15,7 @@ db = SQLAlchemy(app)
 jwt = JWTManager(app)
 
 from app import models
-from app.views import mains, students, institutes, users
+from app.views import mains, students, institutes, users, todo
 with app.app_context():
     db.create_all()
     db.session.execute(text(f"SET time_zone = '{app.config.get('TIME_ZONE')}'"))

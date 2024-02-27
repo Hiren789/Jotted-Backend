@@ -3,6 +3,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import func
 from app.utils import APIResponse
 
+class City(db.Model):
+    __tablename__ = 'cities'
+    id = db.Column(db.BigInteger, primary_key=True)
+    state = db.Column(db.String(32))
+    city = db.Column(db.String(32))
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     pre = db.Column(db.String(8))
@@ -160,13 +166,8 @@ class Todo(db.Model):
     priority = db.Column(db.Integer)
     due = db.Column(db.DateTime)
     students = db.Column(db.JSON)
-    members = db.Column(db.JSON)
+    read_members = db.Column(db.JSON)
+    edit_members = db.Column(db.JSON)
 
     def td_to_json(self):
-        return {'id': self.id,'title': self.title,'body': self.body,'priority': self.priority,'due': self.due.isoformat() if self.due else None,'students': self.students,'members': self.members}
-
-class City(db.Model):
-    __tablename__ = 'cities'
-    id = db.Column(db.BigInteger, primary_key=True)
-    state = db.Column(db.String(32))
-    city = db.Column(db.String(32))
+        return {'id': self.id,'title': self.title,'body': self.body,'priority': self.priority,'due': self.due.isoformat() if self.due else None,'students': self.students,'read_members': self.read_members,'edit_members': self.edit_members}
