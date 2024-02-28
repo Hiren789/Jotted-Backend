@@ -165,6 +165,7 @@ class Todo(db.Model):
     title = db.Column(db.String(100), nullable=False)
     body = db.Column(db.Text)
     priority = db.Column(db.Integer)
+    status = db.Column(db.String(32))
     due = db.Column(db.DateTime)
     students = db.Column(db.JSON)
     read_members = db.Column(db.JSON)
@@ -172,4 +173,4 @@ class Todo(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.now)
 
     def td_to_json(self):
-        return {'id': self.id,'title': self.title,'body': self.body,'priority': self.priority,'due': self.due.isoformat() if self.due else None,'students': self.students,'read_members': self.read_members,'edit_members': self.edit_members, 'created_at': self.created_at}
+        return {'id': self.id,'title': self.title,'body': self.body,'priority': self.priority,'status': self.status,'due': self.due.isoformat() if self.due else None,'students': self.students,'read_members': self.read_members,'edit_members': self.edit_members, 'created_at': self.created_at}
