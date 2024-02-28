@@ -1,6 +1,7 @@
 from app import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import func
+from datetime import datetime
 from app.utils import APIResponse
 
 class City(db.Model):
@@ -168,6 +169,7 @@ class Todo(db.Model):
     students = db.Column(db.JSON)
     read_members = db.Column(db.JSON)
     edit_members = db.Column(db.JSON)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
     def td_to_json(self):
-        return {'id': self.id,'title': self.title,'body': self.body,'priority': self.priority,'due': self.due.isoformat() if self.due else None,'students': self.students,'read_members': self.read_members,'edit_members': self.edit_members}
+        return {'id': self.id,'title': self.title,'body': self.body,'priority': self.priority,'due': self.due.isoformat() if self.due else None,'students': self.students,'read_members': self.read_members,'edit_members': self.edit_members, 'created_at': self.created_at}
