@@ -56,6 +56,13 @@ def edit_institute(user, data):
     db.session.commit()
     return APIResponse.success("Institute updated successfully", 201)
 
+@app.route('/get_campus_by_institute', methods=['POST'])
+@jwt_required()
+@access_control(ins_id=[0,1,2])
+def get_campus_by_institute(user, data):
+    inst = Institute.query.get(data.get("id"))
+    return APIResponse.success("Success", 200, data=list(inst.campus_grade.keys()))
+
 @app.route('/remove_institute', methods=['DELETE'])
 @jwt_required()
 @access_control(ins_id=[0])
