@@ -61,7 +61,7 @@ def edit_institute(user, data):
 @access_control(ins_id=[0,1,2])
 def get_campus_by_institute(user, data):
     inst = Institute.query.get(data.get("id"))
-    return APIResponse.success("Success", 200, data=list(inst.campus_grade.keys()))
+    return APIResponse.success("Success", 200, data=inst.campus_grade)
 
 @app.route('/remove_institute', methods=['DELETE'])
 @jwt_required()
