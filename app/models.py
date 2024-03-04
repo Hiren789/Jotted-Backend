@@ -193,4 +193,4 @@ class Notes(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.now)
 
     def nt_to_json(self):
-        return {'id': self.id, 'title': self.title, 'meeting_type': self.meeting_type, 'attachments': self.attachments, 'students': self.students, 'read_members': self.read_members, 'edit_members': self.edit_members, 'created_at': self.created_at}
+        return {'id': self.id, 'title': self.title, 'meeting_type': self.meeting_type, 'description': self.description, 'attachments': self.attachments, 'students': self.students, 'read_members': self.read_members, 'edit_members': self.edit_members, 'created_at': self.created_at}
