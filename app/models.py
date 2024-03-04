@@ -174,3 +174,23 @@ class Todo(db.Model):
 
     def td_to_json(self):
         return {'id': self.id,'title': self.title,'body': self.body,'priority': self.priority,'status': self.status,'due': self.due.isoformat() if self.due else None,'students': self.students,'read_members': self.read_members,'edit_members': self.edit_members, 'created_at': self.created_at}
+
+class Notes(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    meeting_type = db.Column(db.Text)
+    description = db.Column(db.Text)
+
+
+    attachments = db.Column(db.JSON)
+    # priority = db.Column(db.Integer)
+    # status = db.Column(db.String(32))
+    # due = db.Column(db.DateTime)
+
+    students = db.Column(db.JSON)
+    read_members = db.Column(db.JSON)
+    edit_members = db.Column(db.JSON)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
+    def nt_to_json(self):
+        return {'id': self.id, 'title': self.title, 'meeting_type': self.meeting_type, 'attachments': self.attachments, 'students': self.students, 'read_members': self.read_members, 'edit_members': self.edit_members, 'created_at': self.created_at}

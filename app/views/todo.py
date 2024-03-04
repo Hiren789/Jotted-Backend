@@ -67,6 +67,12 @@ def edit_todo(user, data, todo):
     db.session.commit()
     return APIResponse.success("To-Do Updated Successfully", 200)
 
+@app.route('/get_todo', methods=['POST'])
+@jwt_required()
+@access_control(todo="")
+def get_todo(user, data, todo):
+    return APIResponse.success("Success", 200, data=todo.td_to_json())
+
 @app.route('/remove_todo', methods=['DELETE'])
 @jwt_required()
 @access_control(todo="")

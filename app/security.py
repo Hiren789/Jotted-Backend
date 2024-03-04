@@ -1,6 +1,6 @@
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from functools import wraps
-from app.models import User, Todo
+from app.models import User, Todo, Notes
 from app.utils import APIResponse
 from flask import request
 
@@ -13,6 +13,21 @@ def access_control(**decoratorargs):
             user = User.query.get(current_user)
             if not user:
                 return APIResponse.error("User not found", 404)
+            
+            if 'check_form_data' in decoratorargs:
+                data = request.form
+                for chk in decoratorargs['check_form_data']:
+                    if chk not in data:
+                        return APIResponse.error(f"{chk.title()} is required", 400)
+            if 'note' in decoratorargs:
+                data = request.form
+                note = Notes.query.get(data["id"])
+                if not note:
+                    return APIResponse.error("Note does not exists", 404)
+                if user.id not in note.edit_members:
+                    return APIResponse.error("User has no access to modify this Note", 404)
+                return f(user, data, note, *args, **kwargs)
+
             if 'check_data' in decoratorargs:
                 data = request.get_json()
                 for chk in decoratorargs['check_data']:
