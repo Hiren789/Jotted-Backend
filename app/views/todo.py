@@ -71,7 +71,8 @@ def edit_todo(user, data, todo):
 @jwt_required()
 @access_control(todo="")
 def get_todo(user, data, todo):
-    return APIResponse.success("Success", 200, data=todo.td_to_json())
+    data = {**todo.td_to_json(), "access_type": 1 if user.id in todo.edit_members else 0}
+    return APIResponse.success("Success", 200, data=data)
 
 @app.route('/remove_todo', methods=['DELETE'])
 @jwt_required()

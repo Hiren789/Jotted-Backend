@@ -69,7 +69,8 @@ def get_notes(user):
 @jwt_required()
 @access_control(note="")
 def get_note(user, data, note):
-    return APIResponse.success("Success", 200, data=note.nt_to_json())
+    data = {**note.nt_to_json(), "access_type": 1 if user.id in note.edit_members else 0}
+    return APIResponse.success("Success", 200, data=data)
 
 @app.route('/edit_note', methods=['POST'])
 @jwt_required()
