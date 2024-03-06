@@ -45,7 +45,7 @@ def get_todos(user):
     return APIResponse.success(
         "Success",
         200,
-        data=[todo.td_to_json() for todo in paginated_todos.items],
+        data=[{**todo.td_to_json(), "access_type": 1 if user.id in todo.edit_members else 0} for todo in paginated_todos.items],
         pagination={
             'page': paginated_todos.page,
             'per_page': paginated_todos.per_page,

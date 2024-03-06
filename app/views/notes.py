@@ -56,7 +56,7 @@ def get_notes(user):
     return APIResponse.success(
         "Success",
         200,
-        data=[note.nt_to_json() for note in paginated_notes.items],
+        data=[{**note.nt_to_json(), "access_type": 1 if user.id in note.edit_members else 0} for note in paginated_notes.items],
         pagination={
             'page': paginated_notes.page,
             'per_page': paginated_notes.per_page,
