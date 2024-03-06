@@ -4,6 +4,7 @@ from app import app, db
 from app.models import User, Institute, UserInstitute, Student
 from app.utils import APIResponse, check_data, random_token
 from app.security import access_control
+from sqlalchemy import or_
 
 @app.route('/add_institute', methods=['POST'])
 @jwt_required()
@@ -32,6 +33,66 @@ def add_institute():
 def get_institutes(user):
     data = user.get_institutes()
     return APIResponse.success("Success", 201, data=data)
+
+@app.route('/get_institute_team_members', methods=['GET'])
+@jwt_required()
+@access_control()
+def get_institute_team_members(user):
+    institutes = [x["id"] for x in user.get_institutes()]
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=10, type=int)
+    search_query = request.args.get('search')
+    query = db.session.query(User).join(UserInstitute, User.id == UserInstitute.user_id).filter(UserInstitute.ins_id.in_(institutes))
+    if search_query:
+        search_filter = or_(User.fn.ilike(f"%{search_query}%"), User.ln.ilike(f"%{search_query}%"))
+        query = query.filter(search_filter)
+    paginated_users = query.distinct(User.id).paginate(page=page, per_page=per_page)
+    print([x.id for x in paginated_users.items])
+    return APIResponse.success(
+        "Success",
+        200,
+        data={x.id: f"{x.fn} {x.ln}" for x in paginated_users.items},
+        pagination={
+            'page': paginated_users.page,
+            'per_page': paginated_users.per_page,
+            'total_pages': paginated_users.pages,
+            'total_items': paginated_users.total,
+        }
+    )
+
+@app.route('/get_institute_students', methods=['GET'])
+@jwt_required()
+@access_control()
+def get_institute_students(user):
+
+    final_stds = []
+
+    for x in user.get_institutes():
+        if x["role_id"] == 2:
+            final_stds += user.get_access_id(x["id"])[1]
+        else:
+            final_stds += [x["id"] for x in Institute.query.get(x["id"]).get_students()]
+    final_stds = list(set(final_stds))
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=10, type=int)
+    search_query = request.args.get('search')
+    query = Student.query.filter(Student.id.in_(final_stds))
+    if search_query:
+        search_filter = or_(Student.first_name.ilike(f"%{search_query}%"), Student.middle_name.ilike(f"%{search_query}%"), Student.last_name.ilike(f"%{search_query}%"))
+        query = query.filter(search_filter)
+    paginated_students = query.distinct(Student.id).paginate(page=page, per_page=per_page)
+    print([x.id for x in paginated_students.items])
+    return APIResponse.success(
+        "Success",
+        200,
+        data={x.id: f"{x.first_name} {x.middle_name} {x.last_name}" for x in paginated_students.items},
+        pagination={
+            'page': paginated_students.page,
+            'per_page': paginated_students.per_page,
+            'total_pages': paginated_students.pages,
+            'total_items': paginated_students.total,
+        }
+    )
 
 @app.route('/get_institutes_normal_users', methods=['POST'])
 @jwt_required()
