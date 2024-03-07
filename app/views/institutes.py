@@ -47,7 +47,6 @@ def get_institute_team_members(user):
         search_filter = or_(User.fn.ilike(f"%{search_query}%"), User.ln.ilike(f"%{search_query}%"))
         query = query.filter(search_filter)
     paginated_users = query.distinct(User.id).paginate(page=page, per_page=per_page)
-    print([x.id for x in paginated_users.items])
     return APIResponse.success(
         "Success",
         200,
@@ -60,18 +59,85 @@ def get_institute_team_members(user):
         }
     )
 
+@app.route('/get_team_members', methods=['GET'])
+@jwt_required()
+@access_control(ins_id=[0,1])
+def get_team_members(user, data):
+
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=10, type=int)
+    search_query = request.args.get('search')
+
+    ins_id = data["id"]
+    query = db.session.query(User, UserInstitute).join(UserInstitute, User.id == UserInstitute.user_id).filter(UserInstitute.ins_id == ins_id)
+    
+    if search_query:
+        search_filter = or_(User.fn.ilike(f"%{search_query}%"), User.ln.ilike(f"%{search_query}%"))
+        query = query.filter(search_filter)
+    
+    paginated_users = query.paginate(page=page, per_page=per_page)
+    
+    return APIResponse.success(
+        "Success",
+        200,
+        data={x.id: {"name": f"{x.fn} {x.ln}", "role_id": y.role_id, "students": y.students} for x, y in paginated_users.items},
+        pagination={
+            'page': paginated_users.page,
+            'per_page': paginated_users.per_page,
+            'total_pages': paginated_users.pages,
+            'total_items': paginated_users.total,
+        }
+    )
+
+@app.route('/set_access_team_members', methods=['POST'])
+@jwt_required()
+@access_control(ins_id=[0,1])
+def set_access_team_members(user, data):
+    
+    ins_id = data.get('id')
+    member_id = data.get('member_id')
+    role_id = data.get('role_id')
+
+    uii = UserInstitute.query.filter((UserInstitute.user_id == member_id) & (UserInstitute.ins_id == ins_id)).first()
+    if uii.role_id == 0:
+        return APIResponse.error("Can not modify the owner", 400)
+    
+    if (user.get_access_id(ins_id)[0] == 1) and (uii.role_id == 1):
+        return APIResponse.error("As a admin you can not modify any Admins", 400)
+    
+    if (user.get_access_id(ins_id)[0] == 1) and (role_id == 1):
+        return APIResponse.error("As a admin you can not make someone Admin", 400)
+
+    if role_id == -1:
+        uii.delete()
+        return APIResponse.success("Team Member removed", 200)
+    else:
+        uii.role_id = role_id if role_id else uii.role_id
+        if role_id == 2:
+            if 'students' not in data:
+                APIResponse.error("You need to specify students while setting role as a normal user", 400)
+            uii.students = [int(x) for x in data.get('students')]
+        else:
+            uii.students = []
+        db.session.commit()
+        return APIResponse.success("Successfully set role and students", 200)
+
 @app.route('/get_institute_students', methods=['GET'])
 @jwt_required()
 @access_control()
 def get_institute_students(user):
 
     final_stds = []
+    insss = user.get_institutes()
+    ins_id = request.args.get('ins_id')
+    if ins_id:
+        insss = [x for x in insss if x["id"] == int(ins_id)]
 
-    for x in user.get_institutes():
+    for x in insss:
         if x["role_id"] == 2:
             final_stds += user.get_access_id(x["id"])[1]
         else:
-            final_stds += [x["id"] for x in Institute.query.get(x["id"]).get_students()]
+            final_stds += [y["id"] for y in Institute.query.get(x["id"]).get_students()]
     final_stds = list(set(final_stds))
     page = request.args.get('page', default=1, type=int)
     per_page = request.args.get('per_page', default=10, type=int)
@@ -81,7 +147,6 @@ def get_institute_students(user):
         search_filter = or_(Student.first_name.ilike(f"%{search_query}%"), Student.middle_name.ilike(f"%{search_query}%"), Student.last_name.ilike(f"%{search_query}%"))
         query = query.filter(search_filter)
     paginated_students = query.distinct(Student.id).paginate(page=page, per_page=per_page)
-    print([x.id for x in paginated_students.items])
     return APIResponse.success(
         "Success",
         200,
