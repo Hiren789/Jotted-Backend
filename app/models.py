@@ -22,6 +22,7 @@ class User(db.Model):
     pw = db.Column(db.String(128))
     plan = db.Column(db.JSON)
     pro_com = db.Column(db.Integer, default=0)
+    last_ins = db.Column(db.Integer, db.ForeignKey('institute.id'))
 
     def get_institutes(self, cnt=False, role_id=None):
         query = (
@@ -45,6 +46,9 @@ class User(db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.pw, password)
+    
+    def user_profile(self):
+        return {"pre":self.pre, "fn":self.fn, "mn":self.mn, "ln":self.ln, "suf":self.suf, "email":self.email, "pn":self.pn, "plan":self.plan}
 
 class Institute(db.Model):
     id = db.Column(db.Integer, primary_key=True)
