@@ -80,7 +80,7 @@ def get_team_members(user, data):
     return APIResponse.success(
         "Success",
         200,
-        data={x.id: {"name": f"{x.fn} {x.ln}", "role_id": y.role_id, "students": y.students} for x, y in paginated_users.items},
+        data={x.id: {"name": f"{x.fn} {x.ln}", "suf": f"{x.suf}", "email": f"{x.email}", "pn": f"{x.pn}", "role_id": y.role_id, "students": y.students} for x, y in paginated_users.items},
         pagination={
             'page': paginated_users.page,
             'per_page': paginated_users.per_page,
