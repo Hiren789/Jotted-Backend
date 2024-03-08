@@ -110,7 +110,7 @@ def edit_note(user, data, note):
     db.session.commit()
     return APIResponse.success("Note Updated Successfully", 200)
 
-@app.route('/remove_note', methods=['DELETE'])
+@app.route('/remove_note', methods=['POST'])
 @jwt_required()
 @access_control(note="")
 def remove_note(user, data, note):
