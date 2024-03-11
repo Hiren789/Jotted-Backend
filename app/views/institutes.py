@@ -89,6 +89,22 @@ def get_team_members(user, data):
         }
     )
 
+@app.route('/get_team_member', methods=['POST'])
+@jwt_required()
+@access_control(ins_id=[0,1])
+def get_team_member(user, data):
+    ins_id = data["id"]
+    member_id = data["member_id"]
+    team_member = db.session.query(User, UserInstitute).join(UserInstitute, User.id == UserInstitute.user_id).filter((UserInstitute.ins_id == ins_id) & (User.id == member_id)).first()
+    if not team_member:
+        return APIResponse.error("Member not found", 400)
+    x, y = team_member
+    return APIResponse.success(
+        "Success",
+        200,
+        data={"id": x.id, "pre": f"{x.pre}", "name": f"{x.fn} {x.ln}", "suf": f"{x.suf}", "email": f"{x.email}", "pn": f"{x.pn}", "role_id": y.role_id, "students": y.students}
+    )
+
 @app.route('/set_access_team_members', methods=['POST'])
 @jwt_required()
 @access_control(ins_id=[0,1])
