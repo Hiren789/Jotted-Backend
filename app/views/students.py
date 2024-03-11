@@ -53,6 +53,23 @@ def get_students():
     else:
         return APIResponse.error("User has no access to this institute", 403)
 
+@app.route('/get_student', methods=['GET'])
+@jwt_required()
+def get_student():
+    std_id = request.args.get('id')
+    current_user = get_jwt_identity()
+    user = User.query.get(current_user)
+    if not user:
+        return APIResponse.error("User not found", 400)
+    stdnt = Student.query.get(std_id)
+    if not stdnt:
+        return APIResponse.error("Student not found", 400)
+    access_type, stnds = user.get_access_id(stdnt.ins_id)
+    if (access_type in [0,1]) or (access_type == 2 and int(std_id) in stnds):
+        return APIResponse.success("Success", 200, data = stdnt.se_to_json())
+    else:
+        return APIResponse.error("User has no access to this student", 403)
+
 @app.route('/edit_student', methods=['POST'])
 @jwt_required()
 def edit_student():
