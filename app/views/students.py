@@ -45,11 +45,11 @@ def get_students():
     access_type, stnds = user.get_access_id(ins_id)
     inst = Institute.query.get(ins_id)
     if not inst:
-        return APIResponse.error("Institute not found", 400)
+        return APIResponse.error("Institute not found", 400)    
     if access_type in [0,1]:
-        return APIResponse.success("Success", 200, data=inst.get_students())
+        return APIResponse.success("Success", 200, data = inst.get_students(campus_id = request.args.get('campus_id'), grade = request.args.get('grade')))
     elif access_type == 2:
-        return APIResponse.success("Success", 200, data=inst.get_students(stnds = stnds))
+        return APIResponse.success("Success", 200, data = inst.get_students(campus_id = request.args.get('campus_id'), grade = request.args.get('grade'), stnds = stnds))
     else:
         return APIResponse.error("User has no access to this institute", 403)
 

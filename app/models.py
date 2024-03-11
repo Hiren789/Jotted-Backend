@@ -92,9 +92,13 @@ class Institute(db.Model):
                         return APIResponse.error(f"Already used grade {j} not found in Campus {i} in new data", 400)
         return None
     
-    def get_students(self, cnt=False, stnds = None):
-        students = db.session.query(Student).filter(Student.id.in_(stnds)).all() if stnds else db.session.query(Student).filter_by(ins_id = self.id).all()
-        return len(students) if cnt else [student.se_to_json() for student in students]
+    def get_students(self, cnt=False, stnds = None, campus_id = None, grade = None):
+        students = db.session.query(Student).filter(Student.id.in_(stnds)).all() if stnds else db.session.query(Student).filter_by(ins_id = self.id)
+        if campus_id:
+            students = students.filter_by(campus_id = campus_id)
+        if grade:
+            students = students.filter_by(grade = grade)
+        return len(students.all()) if cnt else [student.se_to_json() for student in students.all()]
 
 class UserInstitute(db.Model):
     id = db.Column(db.Integer, primary_key=True)
