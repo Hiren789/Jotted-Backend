@@ -59,7 +59,7 @@ def get_institute_team_members(user):
         }
     )
 
-@app.route('/get_team_members', methods=['GET'])
+@app.route('/get_team_members', methods=['POST'])
 @jwt_required()
 @access_control(ins_id=[0,1])
 def get_team_members(user, data):
