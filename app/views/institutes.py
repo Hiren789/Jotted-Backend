@@ -99,10 +99,11 @@ def get_team_member(user, data):
     if not team_member:
         return APIResponse.error("Member not found", 400)
     x, y = team_member
+    stdss = Institute.query.get(ins_id).get_students(stnds = y.students)
     return APIResponse.success(
         "Success",
         200,
-        data={"id": x.id, "pre": f"{x.pre}", "name": f"{x.fn} {x.ln}", "suf": f"{x.suf}", "email": f"{x.email}", "pn": f"{x.pn}", "role_id": y.role_id, "students": y.students}
+        data={"id": x.id, "pre": f"{x.pre}", "name": f"{x.fn} {x.ln}", "suf": f"{x.suf}", "email": f"{x.email}", "pn": f"{x.pn}", "role_id": y.role_id, "students": stdss}
     )
 
 @app.route('/set_access_team_members', methods=['POST'])

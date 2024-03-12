@@ -93,7 +93,7 @@ class Institute(db.Model):
         return None
     
     def get_students(self, cnt=False, stnds = None, campus_id = None, grade = None):
-        students = db.session.query(Student).filter(Student.id.in_(stnds)).all() if stnds else db.session.query(Student).filter_by(ins_id = self.id)
+        students = db.session.query(Student).filter(Student.id.in_(stnds)) if stnds else db.session.query(Student).filter_by(ins_id = self.id)
         if campus_id:
             students = students.filter_by(campus_id = campus_id)
         if grade:
