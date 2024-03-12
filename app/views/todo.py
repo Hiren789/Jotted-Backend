@@ -34,6 +34,10 @@ def get_todos(user):
         return APIResponse.error("Invalid sort order", 400)
 
     query = Todo.query.filter((func.json_contains(Todo.read_members, str(user.id))) | (func.json_contains(Todo.edit_members, str(user.id))))
+
+    student_id = request.args.get('student_id')
+    if student_id:
+        query = query.filter(func.json_contains(Todo.students, str(student_id)))
     
     if hasattr(Todo, sort_by):
         column = getattr(Todo, sort_by)

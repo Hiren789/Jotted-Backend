@@ -45,6 +45,10 @@ def get_notes(user):
         return APIResponse.error("Invalid sort order", 400)
 
     query = Notes.query.filter((func.json_contains(Notes.read_members, str(user.id))) | (func.json_contains(Notes.edit_members, str(user.id))))
+
+    student_id = request.args.get('student_id')
+    if student_id:
+        query = query.filter(func.json_contains(Notes.students, str(student_id)))
     
     if hasattr(Notes, sort_by):
         column = getattr(Notes, sort_by)
