@@ -13,13 +13,15 @@ def signup():
     user = User.query.filter(User.email == data.get('email')).first()
     if user:
         return APIResponse.error("This Email is associated with an Existing Account", 409)
-    else:
-        new_user = User(**data)
-        new_user.set_password(data.get('pw'))
-        db.session.add(new_user)
-        db.session.commit()
-        access_token = create_access_token(identity=new_user.id)
-        return APIResponse.success("Signup successfull", 200, access_token=access_token)
+    user = User.query.filter(User.pn == data.get('pn')).first()
+    if user:
+        return APIResponse.error("This Phone Number is associated with an Existing Account", 409)
+    new_user = User(**data)
+    new_user.set_password(data.get('pw'))
+    db.session.add(new_user)
+    db.session.commit()
+    access_token = create_access_token(identity=new_user.id)
+    return APIResponse.success("Signup successfull", 200, access_token=access_token)
 
 @app.route('/signin', methods=['POST'])
 def signin():
