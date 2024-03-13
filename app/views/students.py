@@ -4,6 +4,7 @@ from app import app, db
 from app.models import User, Institute, Student, ArchivedStudent
 from app.utils import APIResponse, check_data
 from app.security import access_control
+from sqlalchemy import or_
 
 @app.route('/add_student', methods=['POST'])
 @jwt_required()
@@ -144,5 +145,37 @@ def unarchive_student(user, data):
 @jwt_required()
 @access_control(ins_id=[0,1])
 def get_archive_student(user, data):
-    stnds = ArchivedStudent.query.filter(ArchivedStudent.ins_id == data.get('id')).all()
-    return APIResponse.success("Success", 200, data = [x.se_to_json() for x in stnds])
+
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=10, type=int)
+    sort_by = request.args.get('sort_by', default='id', type=str)
+    sort_order = request.args.get('sort_order', default='asc', type=str)
+    search_query = request.args.get('search')
+
+    if sort_order not in ['asc', 'desc']:
+        return APIResponse.error("Invalid sort order", 400)
+
+    query = ArchivedStudent.query.filter(ArchivedStudent.ins_id == data.get('id'))
+    
+    if search_query:
+        search_filter = or_(ArchivedStudent.first_name.ilike(f"%{search_query}%"), ArchivedStudent.middle_name.ilike(f"%{search_query}%"), ArchivedStudent.last_name.ilike(f"%{search_query}%"))
+        query = query.filter(search_filter)
+
+    if hasattr(ArchivedStudent, sort_by):
+        column = getattr(ArchivedStudent, sort_by)
+        query = query.order_by(column.asc() if sort_order == 'asc' else column.desc())
+    else:
+        return APIResponse.error("Invalid sort column", 400)
+    
+    paginated_todos = query.paginate(page=page, per_page=per_page)
+    return APIResponse.success(
+        "Success",
+        200,
+        data=[x.se_to_json() for x in paginated_todos.items],
+        pagination={
+            'page': paginated_todos.page,
+            'per_page': paginated_todos.per_page,
+            'total_pages': paginated_todos.pages,
+            'total_items': paginated_todos.total,
+        }
+    )
