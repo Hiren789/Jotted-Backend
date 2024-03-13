@@ -13,9 +13,10 @@ def signup():
     user = User.query.filter(User.email == data.get('email')).first()
     if user:
         return APIResponse.error("This Email is associated with an Existing Account", 409)
-    user = User.query.filter(User.pn == data.get('pn')).first()
-    if user:
-        return APIResponse.error("This Phone Number is associated with an Existing Account", 409)
+    if data.get('pn'):
+        user = User.query.filter(User.pn == data.get('pn')).first()
+        if user:
+            return APIResponse.error("This Phone Number is associated with an Existing Account", 409)
     new_user = User(**data)
     new_user.set_password(data.get('pw'))
     db.session.add(new_user)
