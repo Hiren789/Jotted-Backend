@@ -2,7 +2,7 @@ from flask import request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from app import app, db
 from app.models import User, Institute, UserInstitute, Student
-from app.utils import APIResponse, check_data, random_token
+from app.utils import APIResponse, check_data, random_token, profile_image_url
 from app.security import access_control
 from sqlalchemy import or_
 
@@ -50,7 +50,7 @@ def get_institute_team_members(user):
     return APIResponse.success(
         "Success",
         200,
-        data={x.id: f"{x.fn} {x.ln}" for x in paginated_users.items},
+        data=[{"id": x.id, "name": (f"{x.fn} {x.ln}" if x.fn else None), "profile_pic": profile_image_url(x.id)} for x in paginated_users.items],
         pagination={
             'page': paginated_users.page,
             'per_page': paginated_users.per_page,
@@ -80,7 +80,7 @@ def get_team_members(user, data):
     return APIResponse.success(
         "Success",
         200,
-        data=[{"id": x.id, "pre": f"{x.pre}", "name": f"{x.fn} {x.ln}", "suf": f"{x.suf}", "email": f"{x.email}", "pn": f"{x.pn}", "role_id": y.role_id, "students": y.students} for x, y in paginated_users.items],
+        data=[{"id": x.id, "profile_pic": profile_image_url(x.id), "pre": f"{x.pre}", "name": f"{x.fn} {x.ln}", "suf": f"{x.suf}", "email": f"{x.email}", "pn": f"{x.pn}", "role_id": y.role_id, "students": y.students} for x, y in paginated_users.items],
         pagination={
             'page': paginated_users.page,
             'per_page': paginated_users.per_page,
@@ -103,7 +103,7 @@ def get_team_member(user, data):
     return APIResponse.success(
         "Success",
         200,
-        data={"id": x.id, "pre": f"{x.pre}", "name": f"{x.fn} {x.ln}", "suf": f"{x.suf}", "email": f"{x.email}", "pn": f"{x.pn}", "role_id": y.role_id, "students": stdss}
+        data={"id": x.id, "profile_pic": profile_image_url(x.id), "pre": f"{x.pre}", "name": f"{x.fn} {x.ln}", "suf": f"{x.suf}", "email": f"{x.email}", "pn": f"{x.pn}", "role_id": y.role_id, "students": stdss}
     )
 
 @app.route('/set_access_team_members', methods=['POST'])
@@ -181,7 +181,7 @@ def get_institute_students(user):
 @access_control(ins_id=[0,1])
 def get_institutes_normal_users(user, data):
     usrids = [x.user_id for x in db.session.query(UserInstitute).filter((UserInstitute.ins_id==data.get("id"))&(UserInstitute.role_id==2)).all()]
-    usrs = {x.id:(f"{x.fn} {x.ln}" if x.fn else None) for x in db.session.query(User).filter((User.id.in_(usrids))).all()}
+    usrs = [{"id": x.id, "name": (f"{x.fn} {x.ln}" if x.fn else None), "profile_pic": profile_image_url(x.id)} for x in db.session.query(User).filter((User.id.in_(usrids))).all()]
     return APIResponse.success("Success", 201, data=usrs)
 
 @app.route('/edit_institute', methods=['POST'])

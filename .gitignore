@@ -3,3 +3,4 @@
 *.pyc
 __pycache__/
 /app/static/notes/*
+/app/static/profile_pic/*

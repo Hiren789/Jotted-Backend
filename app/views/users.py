@@ -2,7 +2,7 @@ from flask import request
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
 from app import app, db
 from app.models import User, Institute
-from app.utils import APIResponse, check_data
+from app.utils import APIResponse, check_data, resizer, profile_image_url
 
 @app.route('/signup', methods=['POST'])
 def signup():
@@ -99,3 +99,20 @@ def edit_profile():
             setattr(user, i, data[i])
     db.session.commit()
     return APIResponse.success("Profile successfully edited", 200)
+
+@app.route('/edit_profile_picture', methods=['POST'])
+@jwt_required()
+def edit_profile_picture():
+    current_user = get_jwt_identity()
+    user = User.query.get(current_user)
+
+    if 'profile_pic' in request.files:
+        file = request.files['profile_pic']
+        if file.filename.split(".")[-1] not in app.config["ALLOWED_EXTENSIONS"]:
+            return APIResponse.error("This format is not allowed", 406)
+        file_path = f"{app.config['UPLOAD_FOLDER']}/{user.id}.jpeg"
+        file.save(file_path)
+        resizer(file_path, app.config['PROFILE_PIC_SIZE'])
+        return APIResponse.success("Profile Picture successfully edited", 200, image_url = profile_image_url(user.id))
+    else:
+        return APIResponse.success("Profile Picture not found", 404)

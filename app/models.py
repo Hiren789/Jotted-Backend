@@ -2,7 +2,7 @@ from app import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import func
 from datetime import datetime
-from app.utils import APIResponse
+from app.utils import APIResponse, profile_image_url
 
 class City(db.Model):
     __tablename__ = 'cities'
@@ -48,7 +48,7 @@ class User(db.Model):
         return check_password_hash(self.pw, password)
     
     def user_profile(self):
-        return {"pre":self.pre, "fn":self.fn, "mn":self.mn, "ln":self.ln, "suf":self.suf, "email":self.email, "pn":self.pn, "plan":self.plan}
+        return {"pre":self.pre, "fn":self.fn, "mn":self.mn, "ln":self.ln, "suf":self.suf, "email":self.email, "pn":self.pn, "plan":self.plan, "profile_pic": profile_image_url(self.id)}
 
 class Institute(db.Model):
     id = db.Column(db.Integer, primary_key=True)
