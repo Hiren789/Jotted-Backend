@@ -234,6 +234,8 @@ def send_institute_invite():
         return APIResponse.error("Institute not found", 400)
     if user.get_access_id(data.get("ins_id"))[0] not in [0,1]:
         return APIResponse.error("User has no access to add members to this institute", 403)
+    if user.get_access_id(data.get("ins_id"))[0] in [1] and data.get('role_id') in [1, '1']:
+        return APIResponse.error("Admin has no access to add admins to this institute", 403)
     token = random_token()
     new_invite = UserInstitute(ins_id = data.get('ins_id'), role_id = data.get('role_id'), token = token, students=[])
     db.session.add(new_invite)
