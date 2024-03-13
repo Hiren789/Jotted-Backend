@@ -139,7 +139,7 @@ def unarchive_student(user, data):
         db.session.add(archived_student)
         db.session.delete(stnd)
     db.session.commit()
-    return APIResponse.success("Student Archived successfully", 201)
+    return APIResponse.success("Student Removed from Archived successfully", 201)
 
 @app.route('/get_archive_student', methods=['POST'])
 @jwt_required()

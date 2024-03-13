@@ -180,9 +180,25 @@ def get_institute_students(user):
 @jwt_required()
 @access_control(ins_id=[0,1])
 def get_institutes_normal_users(user, data):
-    usrids = [x.user_id for x in db.session.query(UserInstitute).filter((UserInstitute.ins_id==data.get("id"))&(UserInstitute.role_id==2)).all()]
-    usrs = [{"id": x.id, "name": (f"{x.fn} {x.ln}" if x.fn else None), "profile_pic": profile_image_url(x.id)} for x in db.session.query(User).filter((User.id.in_(usrids))).all()]
-    return APIResponse.success("Success", 201, data=usrs)
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=10, type=int)
+    search_query = request.args.get('search')
+    query = db.session.query(User).join(UserInstitute, User.id == UserInstitute.user_id).filter((UserInstitute.ins_id==data.get("id"))&(UserInstitute.role_id==2))
+    if search_query:
+        search_filter = or_(User.fn.ilike(f"%{search_query}%"), User.ln.ilike(f"%{search_query}%"))
+        query = query.filter(search_filter)
+    paginated_users = query.distinct(User.id).paginate(page=page, per_page=per_page)
+    return APIResponse.success(
+        "Success",
+        200,
+        data=[{"id": x.id, "name": (f"{x.fn} {x.ln}" if x.fn else None), "profile_pic": profile_image_url(x.id)} for x in paginated_users.items],
+        pagination={
+            'page': paginated_users.page,
+            'per_page': paginated_users.per_page,
+            'total_pages': paginated_users.pages,
+            'total_items': paginated_users.total,
+        }
+    )
 
 @app.route('/edit_institute', methods=['POST'])
 @jwt_required()
