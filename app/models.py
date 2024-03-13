@@ -168,6 +168,45 @@ class Student(db.Model):
         
         db.session.commit()
 
+class ArchivedStudent(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    first_name = db.Column(db.String(32))
+    middle_name = db.Column(db.String(32))
+    last_name = db.Column(db.String(32))
+    suffix = db.Column(db.String(8))
+    gender = db.Column(db.String(16))
+    email = db.Column(db.String(32))
+    phone = db.Column(db.String(32))
+    zipcode = db.Column(db.String(6))
+    state = db.Column(db.String(32))
+    country = db.Column(db.String(32))
+    city = db.Column(db.String(32))
+    extra_info = db.Column(db.JSON)
+
+    ins_id = db.Column(db.Integer, db.ForeignKey('institute.id'))
+    campus_id = db.Column(db.String(64))
+    grade = db.Column(db.String(16))
+
+    def se_to_json(self):
+        return {
+            'id':self.id, 
+            'ins_id':self.ins_id, 
+            'campus_id': self.campus_id,
+            'grade': self.grade,            
+            'first_name': self.first_name,
+            'middle_name': self.middle_name,
+            'last_name': self.last_name,
+            'suffix': self.suffix,
+            'gender': self.gender,
+            'email': self.email,
+            'phone': self.phone,
+            'zipcode': self.zipcode,
+            'state': self.state,
+            'country': self.country,
+            'city': self.city,
+            'extra_info': self.extra_info
+        }
+
 class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)

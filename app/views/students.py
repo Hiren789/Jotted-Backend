@@ -1,8 +1,9 @@
 from flask import request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from app import app, db
-from app.models import User, Institute, Student
+from app.models import User, Institute, Student, ArchivedStudent
 from app.utils import APIResponse, check_data
+from app.security import access_control
 
 @app.route('/add_student', methods=['POST'])
 @jwt_required()
@@ -112,3 +113,36 @@ def remove_student():
     db.session.delete(stnd)
     db.session.commit()
     return APIResponse.success("Student removed successfully", 201)
+
+@app.route('/archive_student', methods=['POST'])
+@jwt_required()
+@access_control(ins_id=[0,1])
+def archive_student(user, data):
+    stnds = Student.query.filter((Student.id.in_(data.get('student_ids'))) & (Student.ins_id == data.get('id'))).all()
+    while len(stnds) != 0:
+        stnd = stnds.pop()
+        archived_student = ArchivedStudent(**{x:y for x,y in stnd.__dict__.items() if x not in ['_sa_instance_state']})
+        db.session.add(archived_student)
+        db.session.delete(stnd)
+    db.session.commit()
+    return APIResponse.success("Student Archived successfully", 201)
+
+@app.route('/unarchive_student', methods=['POST'])
+@jwt_required()
+@access_control(ins_id=[0,1])
+def unarchive_student(user, data):
+    stnds = ArchivedStudent.query.filter((ArchivedStudent.id.in_(data.get('student_ids'))) & (ArchivedStudent.ins_id == data.get('id'))).all()
+    while len(stnds) != 0:
+        stnd = stnds.pop()
+        archived_student = Student(**{x:y for x,y in stnd.__dict__.items() if x not in ['_sa_instance_state']})
+        db.session.add(archived_student)
+        db.session.delete(stnd)
+    db.session.commit()
+    return APIResponse.success("Student Archived successfully", 201)
+
+@app.route('/get_archive_student', methods=['POST'])
+@jwt_required()
+@access_control(ins_id=[0,1])
+def get_archive_student(user, data):
+    stnds = ArchivedStudent.query.filter(ArchivedStudent.ins_id == data.get('id')).all()
+    return APIResponse.success("Success", 200, data = [x.se_to_json() for x in stnds])
