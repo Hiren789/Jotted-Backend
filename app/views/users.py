@@ -18,7 +18,8 @@ def signup():
         new_user.set_password(data.get('pw'))
         db.session.add(new_user)
         db.session.commit()
-        return APIResponse.success("Signup successfull", 200)
+        access_token = create_access_token(identity=new_user.id)
+        return APIResponse.success("Signup successfull", 200, access_token=access_token)
 
 @app.route('/signin', methods=['POST'])
 def signin():
