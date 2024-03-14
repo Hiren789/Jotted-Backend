@@ -40,6 +40,7 @@ def get_notes(user):
     per_page = request.args.get('per_page', default=10, type=int)
     sort_by = request.args.get('sort_by', default='due', type=str)
     sort_order = request.args.get('sort_order', default='asc', type=str)
+    search_query = request.args.get('search')
     
     if sort_order not in ['asc', 'desc']:
         return APIResponse.error("Invalid sort order", 400)
@@ -49,7 +50,10 @@ def get_notes(user):
     student_id = request.args.get('student_id')
     if student_id:
         query = query.filter(func.json_contains(Notes.students, str(student_id)))
-    
+
+    if search_query:
+        query = query.filter(Notes.title.ilike(f"%{search_query}%"))
+
     if hasattr(Notes, sort_by):
         column = getattr(Notes, sort_by)
         query = query.order_by(column.asc() if sort_order == 'asc' else column.desc())

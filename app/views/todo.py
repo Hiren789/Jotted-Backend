@@ -29,6 +29,7 @@ def get_todos(user):
     per_page = request.args.get('per_page', default=10, type=int)
     sort_by = request.args.get('sort_by', default='due', type=str)
     sort_order = request.args.get('sort_order', default='asc', type=str)
+    search_query = request.args.get('search')
     
     if sort_order not in ['asc', 'desc']:
         return APIResponse.error("Invalid sort order", 400)
@@ -38,6 +39,9 @@ def get_todos(user):
     student_id = request.args.get('student_id')
     if student_id:
         query = query.filter(func.json_contains(Todo.students, str(student_id)))
+
+    if search_query:
+        query = query.filter(Todo.title.ilike(f"%{search_query}%"))
     
     if hasattr(Todo, sort_by):
         column = getattr(Todo, sort_by)
