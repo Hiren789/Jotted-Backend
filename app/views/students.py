@@ -38,6 +38,12 @@ def add_student():
 @jwt_required()
 def get_students():
     ins_id = request.args.get('ins_id')
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=10, type=int)
+    sort_by = request.args.get('sort_by', default='id', type=str)
+    sort_order = request.args.get('sort_order', default='asc', type=str)
+    search_query = request.args.get('search')
+
     if not ins_id:
         return APIResponse.error("Institute ID is required", 400)
     current_user = get_jwt_identity()
@@ -46,14 +52,49 @@ def get_students():
         return APIResponse.error("User not found", 400)
     access_type, stnds = user.get_access_id(ins_id)
     inst = Institute.query.get(ins_id)
+
+    if sort_order not in ['asc', 'desc']:
+        return APIResponse.error("Invalid sort order", 400)
+
+    query = Student.query.filter(Student.ins_id == ins_id)
+
     if not inst:
         return APIResponse.error("Institute not found", 400)    
     if access_type in [0,1]:
-        return APIResponse.success("Success", 200, data = inst.get_students(campus_id = request.args.get('campus_id'), grade = request.args.get('grade')))
+        pass
     elif access_type == 2:
-        return APIResponse.success("Success", 200, data = inst.get_students(campus_id = request.args.get('campus_id'), grade = request.args.get('grade'), stnds = stnds))
+        query = query.filter(Student.id.in_(stnds))
     else:
         return APIResponse.error("User has no access to this institute", 403)
+    
+    if request.args.get('campus_id'):
+        query = query.filter_by(campus_id = request.args.get('campus_id'))
+
+    if request.args.get('grade'):
+        query = query.filter_by(grade = request.args.get('grade'))
+
+    if search_query:
+        search_filter = or_(Student.first_name.ilike(f"%{search_query}%"), Student.middle_name.ilike(f"%{search_query}%"), Student.last_name.ilike(f"%{search_query}%"))
+        query = query.filter(search_filter)
+
+    if hasattr(Student, sort_by):
+        column = getattr(Student, sort_by)
+        query = query.order_by(column.asc() if sort_order == 'asc' else column.desc())
+    else:
+        return APIResponse.error("Invalid sort column", 400)
+    
+    paginated_todos = query.paginate(page=page, per_page=per_page)
+    return APIResponse.success(
+        "Success",
+        200,
+        data=[x.se_to_json() for x in paginated_todos.items],
+        pagination={
+            'page': paginated_todos.page,
+            'per_page': paginated_todos.per_page,
+            'total_pages': paginated_todos.pages,
+            'total_items': paginated_todos.total,
+        }
+    )
 
 @app.route('/get_student', methods=['GET'])
 @jwt_required()
