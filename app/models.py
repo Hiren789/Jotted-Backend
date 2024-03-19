@@ -49,6 +49,9 @@ class User(db.Model):
     
     def user_profile(self):
         return {"pre":self.pre, "fn":self.fn, "mn":self.mn, "ln":self.ln, "suf":self.suf, "email":self.email, "pn":self.pn, "plan":self.plan, "profile_pic": profile_image_url(self.id)}
+    
+    def member_profile(self):
+        return {"id":self.id, "name":f"{self.fn} {self.ln}", "profile_pic": profile_image_url(self.id)}
 
 class Institute(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -241,3 +244,7 @@ class Notes(db.Model):
 
     def nt_to_json(self):
         return {'id': self.id, 'title': self.title, 'meeting_type': self.meeting_type, 'description': self.description, 'attachments': self.attachments, 'students': self.students, 'read_members': self.read_members, 'edit_members': self.edit_members, 'created_at': self.created_at}
+    
+def list_to_members(member_ids):
+    usrs = User.query.filter(User.id.in_(member_ids)).all()
+    return [x.member_profile() for x in usrs]
