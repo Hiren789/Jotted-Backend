@@ -257,7 +257,7 @@ def send_institute_invite():
     db.session.add(new_invite)
     db.session.commit()
     mail_subject = f'{user.fn} {user.ln} invited you to join {institute.name} on Jotted'
-    mail_body = f'Click on following link to join {token}'
+    mail_body = f'Click on following link to join https://jottedonline.com/redeem-token?token={token}'
     smtp_mail(data['email'], mail_subject, mail_body)
     return APIResponse.success("Sent invite successfully", 201)
 
