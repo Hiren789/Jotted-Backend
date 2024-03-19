@@ -150,6 +150,9 @@ class Student(db.Model):
             'city': self.city,
             'extra_info': self.extra_info
         }
+
+    def se_profile(self):
+        return {'id':self.id, 'name': f"{self.first_name} {self.last_name}"}
     
     def get_team_members(self):
         return db.session.query(UserInstitute).filter((UserInstitute.ins_id == self.ins_id) & (UserInstitute.role_id == 2)).filter(func.json_contains(UserInstitute.students, str(self.id))).all()
@@ -248,3 +251,7 @@ class Notes(db.Model):
 def list_to_members(member_ids):
     usrs = User.query.filter(User.id.in_(member_ids)).all()
     return [x.member_profile() for x in usrs]
+
+def list_to_students(student_ids):
+    students = db.session.query(Student).filter(Student.id.in_(student_ids))
+    return [student.se_profile() for student in students.all()]

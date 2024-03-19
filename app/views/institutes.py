@@ -2,7 +2,7 @@ from flask import request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from app import app, db
 from app.models import User, Institute, UserInstitute, Student
-from app.utils import APIResponse, check_data, random_token, profile_image_url
+from app.utils import APIResponse, check_data, random_token, profile_image_url, smtp_mail
 from app.security import access_control
 from sqlalchemy import or_
 
@@ -256,8 +256,10 @@ def send_institute_invite():
     new_invite = UserInstitute(ins_id = data.get('ins_id'), role_id = data.get('role_id'), token = token, students=[])
     db.session.add(new_invite)
     db.session.commit()
-    # SEND INVITE THORUGH EMAIL WITH INVITE CODE
-    return APIResponse.success("Sent invite successfully", 201, invite_code=token)
+    mail_subject = f'{user.fn} {user.ln} invited you to join {institute.name} on Jotted'
+    mail_body = f'Click on following link to join {token}'
+    smtp_mail(data['email'], mail_subject, mail_body)
+    return APIResponse.success("Sent invite successfully", 201)
 
 @app.route('/accept_institute_invite', methods=['POST'])
 @jwt_required()

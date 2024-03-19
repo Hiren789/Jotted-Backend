@@ -2,7 +2,7 @@ from flask import request
 from flask_jwt_extended import jwt_required
 from app import app, db
 from sqlalchemy import func
-from app.models import Notes, list_to_members
+from app.models import Notes, list_to_members, list_to_students
 from app.utils import APIResponse, check_data
 from app.security import access_control
 import os
@@ -80,6 +80,7 @@ def get_note(user, data, note):
     tmpp = note.nt_to_json()
     tmpp["read_members"] = list_to_members(tmpp["read_members"])
     tmpp["edit_members"] = list_to_members(tmpp["edit_members"])
+    tmpp["students"] = list_to_students(tmpp["students"])
     data = {**tmpp, "access_type": 1 if user.id in note.edit_members else 0}
     return APIResponse.success("Success", 200, data=data)
 
