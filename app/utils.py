@@ -57,4 +57,6 @@ def profile_image_url(user_id):
 def resizer(file_path, resize_size):
     img = Image.open(file_path)
     img = ImageOps.exif_transpose(img)
+    if img.mode != 'RGB':
+        img = img.convert('RGB')
     ImageOps.fit(img, (int(resize_size), int(resize_size))).save(file_path)

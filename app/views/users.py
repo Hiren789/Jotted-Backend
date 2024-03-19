@@ -2,7 +2,7 @@ from flask import request
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
 from app import app, db
 from app.models import User, Institute
-from app.utils import APIResponse, check_data, resizer, profile_image_url
+from app.utils import APIResponse, check_data, resizer, profile_image_url, random_token, smtp_mail
 
 @app.route('/signup', methods=['POST'])
 def signup():
@@ -23,6 +23,38 @@ def signup():
     db.session.commit()
     access_token = create_access_token(identity=new_user.id)
     return APIResponse.success("Signup successfull", 200, access_token=access_token)
+
+@app.route('/forget_password', methods=['POST'])
+def forget_password():
+    data = request.get_json()
+    if data.get('email'):
+        user = User.query.filter(User.email == data.get('email')).first()
+        if not user:
+            return APIResponse.error("User not found with this associated email id", 409)
+    elif data.get('pn'):
+        user = User.query.filter(User.pn == data.get('pn')).first()
+        if not user:
+            return APIResponse.error("User not found with this associated Phone Number", 409)
+    else:
+        return APIResponse.error("Email or Phone Number is required to forget password", 400)
+    new_password = random_token(24)
+    user.set_password(new_password)
+    db.session.commit()
+    smtp_mail(user.email, "Jotted password reset", f"Your new password is {new_password}")
+    return APIResponse.success("Password emailed you successfully", 200)
+
+@app.route('/reset_password', methods=['POST'])
+@jwt_required()
+def reset_password():
+    current_user = get_jwt_identity()
+    data = request.get_json()
+    pw = data.get('pw')
+    user = User.query.get(current_user)
+    if not user:
+        return APIResponse.error("Couldn't find a user account", 400)
+    user.set_password(pw)
+    db.session.commit()
+    return APIResponse.success("Password updated successfully", 200)
 
 @app.route('/signin', methods=['POST'])
 def signin():
