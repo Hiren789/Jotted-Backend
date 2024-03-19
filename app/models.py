@@ -52,6 +52,11 @@ class User(db.Model):
     
     def member_profile(self):
         return {"id":self.id, "name":f"{self.fn} {self.ln}", "profile_pic": profile_image_url(self.id)}
+    
+    def new_notification(self, title, body):
+        nn = Notifications(user_id = self.id, title = title, body = body)
+        db.session.add(nn)
+        db.session.commit()
 
 class Institute(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -248,6 +253,16 @@ class Notes(db.Model):
     def nt_to_json(self):
         return {'id': self.id, 'title': self.title, 'meeting_type': self.meeting_type, 'description': self.description, 'attachments': self.attachments, 'students': self.students, 'read_members': self.read_members, 'edit_members': self.edit_members, 'created_at': self.created_at}
     
+class Notifications(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    title = db.Column(db.String(256))
+    body = db.Column(db.Text)
+    read = db.Column(db.Integer, default=0)
+
+    def ne_to_json(self):
+        return {'id':self.id, 'title':self.title, 'body':self.body}
+
 def list_to_members(member_ids):
     usrs = User.query.filter(User.id.in_(member_ids)).all()
     return [x.member_profile() for x in usrs]
