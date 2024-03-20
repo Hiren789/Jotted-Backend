@@ -4,3 +4,4 @@
 __pycache__/
 /app/static/notes/*
 /app/static/profile_pic/*
+/app/static/student_profile_pic/*

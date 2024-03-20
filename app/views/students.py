@@ -2,7 +2,7 @@ from flask import request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from app import app, db
 from app.models import User, Institute, Student, ArchivedStudent
-from app.utils import APIResponse, check_data
+from app.utils import APIResponse, check_data, resizer, student_profile_image_url
 from app.security import access_control
 from sqlalchemy import or_
 
@@ -220,3 +220,28 @@ def get_archive_student(user, data):
             'total_items': paginated_todos.total,
         }
     )
+
+@app.route('/edit_student_profile_picture', methods=['POST'])
+@jwt_required()
+def edit_student_profile_picture():
+    current_user = get_jwt_identity()
+    user = User.query.get(current_user)
+    data = dict(request.form)
+    std_id = data["student_id"]
+    stnd = Student.query.get(std_id)
+    if not stnd:
+        return APIResponse.error("Student not found", 404)
+    kk = user.get_access_id(stnd.ins_id)
+    if (kk[0] in [0,1]) or ((kk[0] == 2) and (stnd.id in kk[1])):
+        if 'profile_pic' in request.files:
+            file = request.files['profile_pic']
+            if file.filename.split(".")[-1] not in app.config["ALLOWED_EXTENSIONS"]:
+                return APIResponse.error("This format is not allowed", 406)
+            file_path = f"{app.config['STUDENT_UPLOAD_FOLDER']}/{stnd.id}.jpeg"
+            file.save(file_path)
+            resizer(file_path, app.config['PROFILE_PIC_SIZE'])
+            return APIResponse.success("Student Profile Picture successfully edited", 200, image_url = student_profile_image_url(stnd.id))
+        else:
+            return APIResponse.success("Profile Picture not found", 404)
+    else:
+        return APIResponse.error("User has no access to this student", 404)

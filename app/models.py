@@ -2,7 +2,7 @@ from app import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import func
 from datetime import datetime
-from app.utils import APIResponse, profile_image_url
+from app.utils import APIResponse, profile_image_url, student_profile_image_url
 
 class City(db.Model):
     __tablename__ = 'cities'
@@ -153,11 +153,12 @@ class Student(db.Model):
             'state': self.state,
             'country': self.country,
             'city': self.city,
-            'extra_info': self.extra_info
+            'extra_info': self.extra_info,
+            'profile_pic': student_profile_image_url(self.id)
         }
 
     def se_profile(self):
-        return {'id':self.id, 'name': f"{self.first_name} {self.last_name}"}
+        return {'id':self.id, 'name': f'{self.first_name} {self.last_name}', 'profile_pic': student_profile_image_url(self.id)}
     
     def get_team_members(self):
         return db.session.query(UserInstitute).filter((UserInstitute.ins_id == self.ins_id) & (UserInstitute.role_id == 2)).filter(func.json_contains(UserInstitute.students, str(self.id))).all()

@@ -54,6 +54,9 @@ def random_token(length=16):
 def profile_image_url(user_id):
     return f"{app.config['BACKEND_URL']}/static/profile_pic/{user_id}.jpeg" if os.path.exists(f"{app.config['UPLOAD_FOLDER']}/{user_id}.jpeg") else None
 
+def student_profile_image_url(student_id):
+    return f"{app.config['BACKEND_URL']}/static/student_profile_pic/{student_id}.jpeg" if os.path.exists(f"{app.config['STUDENT_UPLOAD_FOLDER']}/{student_id}.jpeg") else None
+
 def resizer(file_path, resize_size):
     img = Image.open(file_path)
     img = ImageOps.exif_transpose(img)
