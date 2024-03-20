@@ -8,7 +8,7 @@ from app.security import access_control
 
 @app.route('/add_goal', methods=['POST'])
 @jwt_required()
-@access_control(check_data=['title','student_id','description','objectives','percent'])
+@access_control(check_data=['title','student_id','description','objectives','percent','start_date','end_date'])
 def add_goal(user):
     data = request.get_json()
     goal = Goals(**data)

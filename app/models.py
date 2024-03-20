@@ -266,10 +266,12 @@ class Goals(db.Model):
     description = db.Column(db.Text)
     objectives = db.Column(db.Text)
     percent = db.Column(db.Integer)
+    start_date = db.Column(db.Date)
+    end_date = db.Column(db.Date)
     created_at = db.Column(db.DateTime, default=datetime.now)
 
     def ga_to_json(self):
-        return {'id': self.id, 'title': self.title, 'description': self.description, 'objectives': self.objectives, 'created_at': self.created_at}
+        return {'id': self.id, 'title': self.title, 'description': self.description, 'objectives': self.objectives, 'created_at': self.created_at, 'start_date': self.start_date, 'end_date': self.end_date}
     
     def history(self):
         return [{"percent": x.percent, "modified_at": x.modified_at} for x in Goals_History.query.filter_by(goal_id=self.id).order_by(Goals_History.id.desc()).all()]
