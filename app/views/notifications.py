@@ -2,7 +2,7 @@ from flask import request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import app, db
 from app.models import User, Notifications
-from app.utils import APIResponse
+from app.utils import APIResponse, check_data
 
 @app.route('/get_notifications', methods=['GET'])
 @jwt_required()
@@ -29,6 +29,21 @@ def get_notifications():
             'total_items': paginated_notes.total,
         }
     )
+
+@app.route('/add_test_notification', methods=['POST'])
+@jwt_required()
+def add_test_notification():
+    current_user = get_jwt_identity()
+    data = request.get_json()
+    user = User.query.get(current_user)
+    if not user:
+        return APIResponse.error("User not found", 400)
+    mfr = check_data(data, ['title','body'])
+    if mfr: return mfr
+    nt = Notifications(user_id = current_user, title = data["title"], body = data["body"])
+    db.session.add(nt)
+    db.session.commit()
+    return APIResponse.success("Notification Created", 201)
 
 @app.route('/read_notifications', methods=['POST'])
 @jwt_required()
