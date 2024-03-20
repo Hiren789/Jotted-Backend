@@ -291,7 +291,7 @@ class Notifications(db.Model):
     read = db.Column(db.Integer, default=0)
 
     def ne_to_json(self):
-        return {'id':self.id, 'title':self.title, 'body':self.body}
+        return {'id':self.id, 'title':self.title, 'body':self.body, 'read':self.read}
 
 def list_to_members(member_ids):
     usrs = User.query.filter(User.id.in_(member_ids)).all()
