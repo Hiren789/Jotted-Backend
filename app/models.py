@@ -252,6 +252,36 @@ class Notes(db.Model):
 
     def nt_to_json(self):
         return {'id': self.id, 'title': self.title, 'meeting_type': self.meeting_type, 'description': self.description, 'attachments': self.attachments, 'students': self.students, 'read_members': self.read_members, 'edit_members': self.edit_members, 'created_at': self.created_at}
+
+class Goals_History(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    goal_id = db.Column(db.Integer, db.ForeignKey('goals.id'))
+    percent = db.Column(db.Integer)
+    modified_at = db.Column(db.DateTime, default=datetime.now)
+
+class Goals(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey('student.id'))
+    description = db.Column(db.Text)
+    objectives = db.Column(db.Text)
+    percent = db.Column(db.Integer)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
+    def ga_to_json(self):
+        return {'id': self.id, 'title': self.title, 'description': self.description, 'objectives': self.objectives, 'created_at': self.created_at}
+    
+    def history(self):
+        return [{"percent": x.percent, "modified_at": x.modified_at} for x in Goals_History.query.filter_by(goal_id=self.id).order_by(Goals_History.id.desc()).all()]
+    
+    def log_percent(self, percent):
+        ghe = Goals_History(goal_id = self.id, percent = percent)
+        db.session.add(ghe)
+        db.session.commit()
+
+    def clear_logs(self):
+        db.session.query(Goals_History).filter_by(goal_id = self.id).delete()
+        db.session.commit()
     
 class Notifications(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -1,6 +1,6 @@
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from functools import wraps
-from app.models import User, Todo, Notes
+from app.models import User, Todo, Notes, Goals, Student
 from app.utils import APIResponse
 from flask import request
 
@@ -46,6 +46,15 @@ def access_control(**decoratorargs):
                 if user.id not in todo.edit_members:
                     return APIResponse.error("User has no access to modify this To-Do", 404)
                 return f(user, data, todo, *args, **kwargs)
+            if 'goal' in decoratorargs:
+                data = request.get_json()
+                goal = Goals.query.get(data["id"])
+                if not goal:
+                    return APIResponse.error("Goal does not exists", 404)
+                stnd = Student.query.get(goal.student_id)
+                if user.get_access_id(stnd.ins_id)[0] not in [0,1,2]:
+                    return APIResponse.error("User has no access to this Goal", 404)
+                return f(user, data, goal, *args, **kwargs)
             return f(user, *args, **kwargs)
         return decorated_function
     return  decorator
