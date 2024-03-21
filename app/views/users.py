@@ -1,8 +1,9 @@
-from flask import request
+from flask import request, Flask, redirect, url_for, session, jsonify
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
 from app import app, db
 from app.models import User, Institute
-from app.utils import APIResponse, check_data, resizer, profile_image_url, random_token, smtp_mail
+from app.utils import APIResponse, check_data, resizer, profile_image_url, random_token, smtp_mail, urlonpath
+import requests
 
 @app.route('/signup', methods=['POST'])
 def signup():
@@ -74,6 +75,67 @@ def signin():
                 return APIResponse.error("Email or Password is incorrect", 400)
     else:
         return APIResponse.error("Email and Password are required", 400)
+
+@app.route('/google_login')
+def google_login():
+    auth_url = (
+        f'{app.config.get("AUTH_URI")}?client_id={app.config.get("CLIENT_ID")}&redirect_uri={app.config.get("REDIRECT_URI")}&'
+        'response_type=code&scope=email'
+    )
+    return redirect(auth_url)
+
+@app.route('/auth/google/callback')
+def auth_callback():
+    auth_code = request.args.get('code')
+    token_data = {
+        'code': auth_code,
+        'client_id': app.config.get("CLIENT_ID"),
+        'client_secret': app.config.get("CLIENT_SECRET"),
+        'redirect_uri': app.config.get("REDIRECT_URI"),
+        'grant_type': 'authorization_code'
+    }
+    token_response = requests.post(app.config.get("TOKEN_URI"), data=token_data)
+    token_info = token_response.json()
+    if 'access_token' not in token_info:
+        return 'Authentication failed'
+    session['access_token'] = token_info['access_token']
+    user_info_response = requests.get(
+        app.config.get("USER_INFO_URI"),
+        headers={'Authorization': f'Bearer {token_info["access_token"]}'}
+    )
+    user_info = user_info_response.json()
+    if "email" not in user_info:
+        return APIResponse.error("Email id not found in Google Account", 404)
+    user = User.query.filter_by(email=user_info["email"]).first()
+    if not user:
+        data = {"email": user_info["email"]}
+        if "name" in user_info:
+            nmmmm = user_info["name"].split(" ")
+            data["fn"] = nmmmm[0]
+            data["ln"] = " ".join(nmmmm[1:])
+        user = User(**data)
+        db.session.add(user)
+        db.session.commit()
+        access_token = create_access_token(identity=user.id)
+        session.pop('access_token', None)
+        if "picture" in user_info:
+            file_path = f"{app.config['UPLOAD_FOLDER']}/{user.id}.jpeg"
+            urlonpath(user_info["picture"].replace('s96', f"s{app.config['PROFILE_PIC_SIZE']}"), file_path)
+        return APIResponse.success("Signup successfull", 200, access_token=access_token)
+    else:
+        access_token = create_access_token(identity=user.id)
+        session.pop('access_token', None)
+        return APIResponse.success("Signin successful", 200, access_token=access_token)
+
+@app.route('/upon_login', methods=['POST'])
+@jwt_required()
+def upon_login():
+    current_user = get_jwt_identity()
+    user = User.query.get(current_user)
+    if not user:
+        return APIResponse.error("Couldn't find a user account", 400)
+    last_ins = {"ins_id":user.last_ins, "role_id":user.get_access_id(user.last_ins)[0], "ins_type": Institute.query.get(user.last_ins).ins_type} if user.last_ins else {}
+    return APIResponse.success("Success", 200, pro_com=user.pro_com, last_ins=last_ins)
 
 @app.route('/set_payment', methods=['POST'])
 @jwt_required()

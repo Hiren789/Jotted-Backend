@@ -6,6 +6,8 @@ from app import app
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import requests
+from io import BytesIO
 
 class APIResponse:
     @staticmethod
@@ -63,3 +65,8 @@ def resizer(file_path, resize_size):
     if img.mode != 'RGB':
         img = img.convert('RGB')
     ImageOps.fit(img, (int(resize_size), int(resize_size))).save(file_path)
+
+def urlonpath(url, file_path):
+    response = requests.get(url)
+    image = Image.open(BytesIO(response.content))
+    image.save(file_path, 'JPEG')
