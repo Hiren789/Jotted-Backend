@@ -1,7 +1,7 @@
 from flask import request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from app import app, db
-from app.models import User, Institute, Student, ArchivedStudent
+from app.models import User, Institute, Student, ArchivedStudent, list_to_members
 from app.utils import APIResponse, check_data, resizer, student_profile_image_url
 from app.security import access_control
 from sqlalchemy import or_
@@ -108,8 +108,10 @@ def get_student():
     if not stdnt:
         return APIResponse.error("Student not found", 400)
     access_type, stnds = user.get_access_id(stdnt.ins_id)
+    tmpdata = stdnt.se_to_json()
+    tmpdata["team_member"] = list_to_members(tmpdata["team_member"])
     if (access_type in [0,1]) or (access_type == 2 and int(std_id) in stnds):
-        return APIResponse.success("Success", 200, data = stdnt.se_to_json())
+        return APIResponse.success("Success", 200, data = tmpdata)
     else:
         return APIResponse.error("User has no access to this student", 403)
 
