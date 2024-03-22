@@ -5,6 +5,7 @@ from sqlalchemy import text
 from flask_jwt_extended import JWTManager
 from dotenv import load_dotenv
 import os
+import stripe
 
 app = Flask(__name__)
 load_dotenv(".env")
@@ -13,6 +14,7 @@ app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False
 CORS(app, resources={r"/*": {"origins": ["http://localhost:3000", "https://jottedonline.com"]}})
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
+stripe.api_key = app.config.get('STRIPE_SECRET_KEY')
 
 from app import models
 from app.views import mains, students, institutes, users, todo, notes, notifications, goals

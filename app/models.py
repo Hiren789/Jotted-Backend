@@ -22,6 +22,8 @@ class User(db.Model):
     pn = db.Column(db.String(15), index=True, unique=True)
     pw = db.Column(db.String(128))
     plan = db.Column(db.JSON)
+    stripe_cus_id = db.Column(db.String(256))
+    stripe_sub_id = db.Column(db.String(256))
     pro_com = db.Column(db.Integer, default=0)
     last_ins = db.Column(db.Integer, db.ForeignKey('institute.id'))
 
