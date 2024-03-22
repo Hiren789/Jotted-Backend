@@ -189,10 +189,10 @@ def edit_profile():
     if not user:
         return APIResponse.error("Couldn't find a user account", 400)
     if user.pro_com == 0:
-        mfr = check_data(data, ["pre", "fn", "mn", "ln", "suf", "pn"])
+        mfr = check_data(data, ["pre", "fn", "mn", "ln", "suf", "pn", "gender"])
         if mfr: return mfr
         user.pro_com = 1
-    for i in ["pre", "fn", "mn", "ln", "suf", "pn"]:
+    for i in ["pre", "fn", "mn", "ln", "suf", "pn", "gender"]:
         if i in data:
             setattr(user, i, data[i])
     db.session.commit()
