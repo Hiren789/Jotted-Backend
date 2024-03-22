@@ -32,7 +32,18 @@ def add_institute():
 @access_control()
 def get_institutes(user):
     data = user.get_institutes()
-    return APIResponse.success("Success", 201, data=data)
+    return APIResponse.success("Success", 200, data=data)
+
+@app.route('/get_institute', methods=['GET'])
+@jwt_required()
+@access_control()
+def get_institute(user):
+    data = user.get_institutes()
+    ins_id = request.args.get('ins_id')
+    for dtaa in data:
+        if dtaa['id'] == int(ins_id):
+            return APIResponse.success("Success", 200, data=dtaa)
+    return APIResponse.error("Institute not found", 404)
 
 @app.route('/get_institute_team_members', methods=['GET'])
 @jwt_required()
