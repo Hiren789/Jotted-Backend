@@ -295,9 +295,10 @@ class Notifications(db.Model):
     title = db.Column(db.String(256))
     body = db.Column(db.Text)
     read = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
     def ne_to_json(self):
-        return {'id':self.id, 'title':self.title, 'body':self.body, 'read':self.read}
+        return {'id':self.id, 'title':self.title, 'body':self.body, 'read':self.read, 'created_at': self.created_at}
 
 def list_to_members(member_ids):
     usrs = User.query.filter(User.id.in_(member_ids)).all()
