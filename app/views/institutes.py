@@ -1,7 +1,7 @@
 from flask import request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from app import app, db
-from app.models import User, Institute, UserInstitute, Student
+from app.models import User, Institute, UserInstitute, Student, Goals
 from app.utils import APIResponse, check_data, random_token, profile_image_url, smtp_mail
 from app.security import access_control
 from sqlalchemy import or_
@@ -243,6 +243,11 @@ def get_campus_by_institute(user, data):
 @access_control(ins_id=[0])
 def remove_institute(user, data):
     db.session.query(UserInstitute).filter_by(ins_id=data.get("id")).delete()
+    stnds = Student.query.filter_by(ins_id=data.get("id")).all()
+    gls = Goals.query.filter(Goals.student_id.in_([_.id for _ in stnds])).all()
+    for gl in gls:
+        gl.clear_logs()
+    db.session.query(Goals).filter(Goals.student_id.in_([_.id for _ in stnds])).delete()
     db.session.query(Student).filter_by(ins_id=data.get("id")).delete()
     inst = Institute.query.get(data.get("id"))
     db.session.delete(inst)
