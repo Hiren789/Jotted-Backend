@@ -102,6 +102,24 @@ def set_payment():
     return APIResponse.success("Success", 200, redirect=True, url=checkout_session.url)
     return redirect(checkout_session.url)
 
+@app.route('/cancel_subscription', methods=['POST'])
+@jwt_required()
+def cancel_subscription():
+    current_user = get_jwt_identity()
+    data = request.get_json()
+    user = User.query.get(current_user)
+    if not user:
+        return APIResponse.error("Couldn't find a user account", 400)
+    
+    if user.stripe_sub_id:
+        try:
+            stripe.Subscription.delete(user.stripe_sub_id)
+            return APIResponse.success("Cancellation successfull", 200)
+        except:
+            return APIResponse.error("Something went wrong", 403)
+    else:
+        return APIResponse.error("Subscription not found", 403)
+
 @app.route('/call/payment', methods=['GET'])
 def call_payment():
     return redirect("https://jottedonline.com/organizer-dashboard")
