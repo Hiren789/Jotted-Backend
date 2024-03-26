@@ -125,7 +125,7 @@ def auth_callback():
     else:
         access_token = create_access_token(identity=user.id)
         session.pop('access_token', None)
-        return redirect(f"https://jottedonline.com/google-login?token={access_token}")
+        return redirect(f"https://jottedonline.com/google-callback-url?token={access_token}")
 
 @app.route('/get_profile', methods=['POST'])
 @jwt_required()
