@@ -160,7 +160,7 @@ def webhook():
             user.plan = {"0": {"c": 1, "d": "m", "s": 10}}
             db.session.commit()
 
-    elif event['type'] == 'customer.subscription.updated':
+    elif event['type'] in ['customer.subscription.updated', 'customer.subscription.created']:
         stripe_cus_id = event['data']['object']['customer']
         user = User.query.filter_by(stripe_cus_id = stripe_cus_id).first()
         if user:
