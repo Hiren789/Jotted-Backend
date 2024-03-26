@@ -1,8 +1,27 @@
 from flask import request, redirect, jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from app import app, db, stripe
-from app.models import User
+from app.models import User, Institute, UserInstitute
 from app.utils import APIResponse, calculate_price
+
+def validate_new_plan(user, plan):
+    ins_type = int(list(plan.keys())[0])
+    usedcnt = user.get_institutes(role_id="0")
+    if usedcnt == []:
+        return None
+    if usedcnt[0]["ins_type"] != ins_type:
+        return APIResponse.error(f"As user has already created one Individual or Team Institute, They can not change plan to other", 403)
+    if len(usedcnt) > plan[str(ins_type)]["c"]:
+        return APIResponse.error(f"User is already owner of more than {plan[str(ins_type)]['c']} Institutes.", 403)
+    insss = Institute.query.filter(Institute.id.in_([_["id"] for _ in usedcnt])).all()
+    for inss in insss:
+        usedstdcnt = inss.get_students(cnt=True)
+        if usedstdcnt > plan[str(ins_type)]["s"]:
+            return APIResponse.error(f"Institute (id={inss.id}) owned by user has already {usedstdcnt} Students.", 403)
+        if ins_type == 1:
+            usedtmcnt = UserInstitute.query.filter_by(ins_id = inss.id).count()
+            if usedtmcnt > plan[str(ins_type)]["t"]:
+                return APIResponse.error(f"Institute (id={inss.id}) owned by user has already {usedtmcnt} Team Members.", 403)
 
 def search_for_price(ins_type, students, recurring, team=None):
     prices = []
@@ -71,6 +90,13 @@ def set_payment():
         db.session.commit()
     
     itt = list(plan.keys())[0]
+
+    kk = calculate_price(int(itt), plan[itt]["s"], plan[itt].get("t"), plan[itt]["d"])
+    if isinstance(kk, str): return APIResponse.error(kk, 403)
+    
+    abc = validate_new_plan(user, plan)
+    if abc: return abc
+    
     ppi = search_for_price(int(itt), plan[itt]["s"], plan[itt]["d"], team=plan[itt].get("t"))
 
     if user.stripe_sub_id:
