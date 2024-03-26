@@ -176,6 +176,15 @@ def archive_student(user, data):
 @access_control(ins_id=[0,1])
 def unarchive_student(user, data):
     stnds = ArchivedStudent.query.filter((ArchivedStudent.id.in_(data.get('student_ids'))) & (ArchivedStudent.ins_id == data.get('id'))).all()
+    
+    usedstdcnt = Institute.query.get(data.get('id'))
+    inss_typ = usedstdcnt.ins_type
+    owneruser = User.query.get(usedstdcnt.user_id)
+    usedstdcnt = usedstdcnt.get_students(cnt=True)
+    print(usedstdcnt, owneruser, len(stnds))
+    if usedstdcnt + len(stnds) > owneruser.plan[str(inss_typ)]["s"]:
+        return APIResponse.error("Students limit reached as per payment Plan, can not unarchive more students", 400)
+
     while len(stnds) != 0:
         stnd = stnds.pop()
         archived_student = Student(**{x:y for x,y in stnd.__dict__.items() if x not in ['_sa_instance_state']})
