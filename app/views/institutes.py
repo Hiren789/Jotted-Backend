@@ -1,10 +1,10 @@
 from flask import request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from app import app, db
-from app.models import User, Institute, UserInstitute, Student, Goals
+from app.models import User, Institute, UserInstitute, Student, Goals, Notes, Todo
 from app.utils import APIResponse, check_data, random_token, profile_image_url, smtp_mail
 from app.security import access_control
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 
 @app.route('/add_institute', methods=['POST'])
 @jwt_required()
@@ -238,16 +238,36 @@ def get_campus_by_institute(user, data):
     inst = Institute.query.get(data.get("id"))
     return APIResponse.success("Success", 200, data=inst.campus_grade)
 
+@app.route('/test', methods=['GET'])
+def test():
+    stnds = [1]
+    for stnd in stnds:
+        nts = Notes.query.filter(func.json_contains(Notes.students, str(stnd)))
+        for nt in nts:
+            nt.students = [x for x in nt.students if x != stnd]
+        tds = Todo.query.filter(func.json_contains(Todo.students, str(stnd)))
+        for td in tds:
+            td.students = [x for x in td.students if x != stnd]    
+    db.session.commit()
+
 @app.route('/remove_institute', methods=['DELETE'])
 @jwt_required()
 @access_control(ins_id=[0])
 def remove_institute(user, data):
     db.session.query(UserInstitute).filter_by(ins_id=data.get("id")).delete()
-    stnds = Student.query.filter_by(ins_id=data.get("id")).all()
-    gls = Goals.query.filter(Goals.student_id.in_([_.id for _ in stnds])).all()
+    stnds = [_.id for _ in Student.query.filter_by(ins_id=data.get("id")).all()]
+    gls = Goals.query.filter(Goals.student_id.in_(stnds)).all()
     for gl in gls:
         gl.clear_logs()
-    db.session.query(Goals).filter(Goals.student_id.in_([_.id for _ in stnds])).delete()
+    db.session.query(Goals).filter(Goals.student_id.in_(stnds)).delete()
+    for stnd in stnds:
+        nts = Notes.query.filter(func.json_contains(Notes.students, str(stnd)))
+        for nt in nts:
+            nt.students = [x for x in nt.students if x != stnd]
+        tds = Todo.query.filter(func.json_contains(Todo.students, str(stnd)))
+        for td in tds:
+            td.students = [x for x in td.students if x != stnd]    
+    db.session.commit()
     db.session.query(Student).filter_by(ins_id=data.get("id")).delete()
     inst = Institute.query.get(data.get("id"))
     db.session.delete(inst)
