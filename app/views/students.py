@@ -32,7 +32,7 @@ def add_student():
     db.session.add(new_student)
     db.session.commit()
     new_student.set_team_member_acess(team_memb)
-    return APIResponse.success("Student added successfully", 201)
+    return APIResponse.success("Student added successfully", 201, data=new_student.id)
 
 @app.route('/get_students', methods=['GET'])
 @jwt_required()
