@@ -127,6 +127,10 @@ def set_access_team_members(user, data):
     role_id = data.get('role_id')
 
     uii = UserInstitute.query.filter((UserInstitute.user_id == member_id) & (UserInstitute.ins_id == ins_id)).first()
+
+    if not uii:
+        return APIResponse.error("Can not found member within institute", 404)
+
     if uii.role_id == 0:
         return APIResponse.error("Can not modify the owner", 400)
     
