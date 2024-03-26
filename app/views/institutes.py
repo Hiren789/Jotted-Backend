@@ -137,7 +137,7 @@ def set_access_team_members(user, data):
         return APIResponse.error("As a admin you can not make someone Admin", 400)
 
     if role_id == -1:
-        uii.delete()
+        db.session.query(UserInstitute).filter((UserInstitute.user_id == member_id) & (UserInstitute.ins_id == ins_id)).delete()
         return APIResponse.success("Team Member removed", 200)
     else:
         uii.role_id = role_id if role_id else uii.role_id
