@@ -82,7 +82,7 @@ def set_payment():
             if sub.status == "active":
                 return APIResponse.success("Plan updated successfully", 200)
             elif sub.status == "past_due":
-                # return stripe.Invoice.retrieve(sub.latest_invoice).hosted_invoice_url
+                return APIResponse.success("Success", 200, redirect=True, url=stripe.Invoice.retrieve(sub.latest_invoice).hosted_invoice_url)
                 return redirect(stripe.Invoice.retrieve(sub.latest_invoice).hosted_invoice_url)
         except:
             pass
@@ -99,7 +99,7 @@ def set_payment():
         success_url = app.config.get("BACKEND_URL") + '/call/payment?session_id={CHECKOUT_SESSION_ID}',
         cancel_url = app.config.get("BACKEND_URL") + '/cancel.html',
     )
-    # return checkout_session.url
+    return APIResponse.success("Success", 200, redirect=True, url=checkout_session.url)
     return redirect(checkout_session.url)
 
 @app.route('/call/payment', methods=['GET'])
