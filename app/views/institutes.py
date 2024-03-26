@@ -264,6 +264,10 @@ def send_institute_invite():
     institute = Institute.query.get(data.get('ins_id'))
     if not institute:
         return APIResponse.error("Institute not found", 400)
+    usedtmcnt = UserInstitute.query.filter_by(ins_id = data.get('ins_id')).count()
+    owneruser = User.query.get(institute.user_id)
+    if usedtmcnt >= owneruser.plan[str(institute.ins_type)]["t"]:
+        return APIResponse.error(f"Team members limit reached for this institue.", 403)
     if user.get_access_id(data.get("ins_id"))[0] not in [0,1]:
         return APIResponse.error("User has no access to add members to this institute", 403)
     if user.get_access_id(data.get("ins_id"))[0] in [1] and data.get('role_id') in [1, '1']:
