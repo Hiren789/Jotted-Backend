@@ -135,7 +135,8 @@ def get_profile():
     if not user:
         return APIResponse.error("Couldn't find a user account", 400)
     data = user.user_profile()
-    data["last_ins"] = {"ins_id":user.last_ins, "role_id":user.get_access_id(user.last_ins)[0], "ins_type": Institute.query.get(user.last_ins).ins_type} if user.last_ins else {}
+    insss = Institute.query.get(user.last_ins)
+    data["last_ins"] = {"ins_id":insss.id, "name":insss.name, "role_id":user.get_access_id(insss.id)[0], "ins_type": insss.ins_type} if user.last_ins else {}
     data["pro_com"] = user.pro_com
     return APIResponse.success("Success", 200, data=data)
 
