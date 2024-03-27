@@ -10,7 +10,7 @@ from urllib.parse import quote
 
 @app.route('/add_notes', methods=['POST'])
 @jwt_required()
-@access_control(check_form_data=['title', 'meeting_type', 'description','students','read_members','edit_members'])
+@access_control(check_form_data=['title', 'description','students','read_members','edit_members'])
 def add_notes(user):
     data = dict(request.form)
     for k in ['students','read_members','edit_members']: data[k] = eval(data[k])

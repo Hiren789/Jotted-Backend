@@ -8,7 +8,7 @@ from app.security import access_control
 
 @app.route('/add_todo', methods=['POST'])
 @jwt_required()
-@access_control(check_data=['title','body','priority','status','due','students','read_members','edit_members'])
+@access_control(check_data=['title','body','priority','status','students','read_members','edit_members'])
 def create_todo(user):
     data = request.get_json()
     if user.id not in data['edit_members']:
