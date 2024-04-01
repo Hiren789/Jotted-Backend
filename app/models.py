@@ -281,6 +281,7 @@ class Goals(db.Model):
         return [{"percent": x.percent, "modified_at": x.modified_at} for x in Goals_History.query.filter_by(goal_id=self.id).order_by(Goals_History.id.desc()).all()]
     
     def log_percent(self, percent):
+        self.percent = percent
         ghe = Goals_History(goal_id = self.id, percent = percent)
         db.session.add(ghe)
         db.session.commit()
