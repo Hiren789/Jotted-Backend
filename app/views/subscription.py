@@ -3,6 +3,7 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 from app import app, db, stripe
 from app.models import User, Institute, UserInstitute
 from app.utils import APIResponse, calculate_price
+from datetime import datetime
 
 def validate_new_plan(user, plan):
     ins_type = int(list(plan.keys())[0])
@@ -162,6 +163,28 @@ def call_payment():
         return APIResponse.success("Plan updated successfully", 200)
     else:
         return APIResponse.success("Something went wrong with payment, Please contact technical support", 403)
+
+@app.route('/get_current_subscription', methods=['GET'])
+@jwt_required()
+def get_current_subscription():
+    current_user = get_jwt_identity()
+    user = User.query.get(current_user)
+    if not user:
+        return APIResponse.error("Couldn't find a user account", 400)
+    if not user.stripe_cus_id or not user.stripe_sub_id:
+        return APIResponse.error(f"User has no active subscription", 404)
+    try:
+        nsp = stripe.Invoice.upcoming(subscription=user.stripe_sub_id)
+        data = {
+            "amount_due": nsp["amount_due"]/100,
+            "next_payment_attempt": datetime.utcfromtimestamp(nsp["next_payment_attempt"]).isoformat(),
+            "items": [{"description":x["description"], "amount": x["amount"]/100} for x in nsp["lines"]["data"]],
+            "currency": nsp["currency"]
+        }
+        print(nsp)
+        return jsonify(data)
+    except:
+        return APIResponse.error(f"Failed to get Subscription details from stripe", 404)
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
