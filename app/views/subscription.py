@@ -124,7 +124,7 @@ def set_payment():
         metadata = {"user_id": current_user, "ins_type": itt, "students": plan[itt]["s"], "duration": plan[itt]["d"], "team": plan[itt].get("t"), "count": plan[itt]["c"]},
         mode='subscription',
         success_url = app.config.get("BACKEND_URL") + '/call/payment?session_id={CHECKOUT_SESSION_ID}',
-        cancel_url = app.config.get("BACKEND_URL") + '/cancel.html',
+        cancel_url = app.config.get("BACKEND_URL") + '/payment-failure',
     )
     return APIResponse.success("Success", 200, redirect=True, url=checkout_session.url)
     return redirect(checkout_session.url)
@@ -149,7 +149,7 @@ def cancel_subscription():
 
 @app.route('/call/payment', methods=['GET'])
 def call_payment():
-    return redirect("https://jottedonline.com/organizer-dashboard")
+    return redirect(f"https://jottedonline.com/payment-success?session_id={request.args.get('session_id')}")
     return APIResponse.success("Plan updated successfully", 200)
     chk_ses_id = request.args.get('session_id')
     checkout_session = stripe.checkout.Session.retrieve(id=chk_ses_id)
@@ -163,6 +163,12 @@ def call_payment():
         return APIResponse.success("Plan updated successfully", 200)
     else:
         return APIResponse.success("Something went wrong with payment, Please contact technical support", 403)
+
+@app.route('/get_session_details', methods=['GET'])
+def get_session_details():
+    chk_ses_id = request.args.get('session_id')
+    checkout_session = stripe.checkout.Session.retrieve(id=chk_ses_id)
+    return jsonify(checkout_session)
 
 @app.route('/get_current_subscription', methods=['GET'])
 @jwt_required()
@@ -181,7 +187,6 @@ def get_current_subscription():
             "items": [{"description":x["description"], "amount": x["amount"]/100} for x in nsp["lines"]["data"]],
             "currency": nsp["currency"]
         }
-        print(nsp)
         return jsonify(data)
     except:
         return APIResponse.error(f"Failed to get Subscription details from stripe", 404)

@@ -5,6 +5,7 @@ from sqlalchemy import func
 from app.models import Todo, list_to_members, list_to_students
 from app.utils import APIResponse, check_data
 from app.security import access_control
+from datetime import datetime
 
 @app.route('/add_todo', methods=['POST'])
 @jwt_required()
@@ -60,6 +61,31 @@ def get_todos(user):
             'total_pages': paginated_todos.pages,
             'total_items': paginated_todos.total,
         }
+    )
+
+@app.route('/get_due_todos', methods=['GET'])
+@jwt_required()
+@access_control()
+def get_due_todos(user):
+
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+
+    if not start_date or not end_date:
+        return APIResponse.error("Both start_date and end_date parameters are required.", 404)
+
+    try:
+        start_date = datetime.strptime(start_date, '%Y-%m-%d')
+        end_date = datetime.strptime(end_date, '%Y-%m-%d')
+    except ValueError:
+        return APIResponse.error("Invalid date format. Please provide dates in YYYY-MM-DD format.", 403)
+
+    todos = Todo.query.filter((func.json_contains(Todo.read_members, str(user.id))) | (func.json_contains(Todo.edit_members, str(user.id)))).filter(Todo.due.between(start_date, end_date)).all()
+    
+    return APIResponse.success(
+        "Success",
+        200,
+        data=[{**todo.td_to_json(), "access_type": 1 if user.id in todo.edit_members else 0} for todo in todos]
     )
 
 @app.route('/edit_todo', methods=['POST'])
