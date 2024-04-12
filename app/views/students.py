@@ -21,8 +21,11 @@ def add_student():
         return APIResponse.error("Institute not found", 400)
     if user.get_access_id(ins.id)[0] not in [0, 1]:
         return APIResponse.error("User has no access to add student to this institute", 403)
-    usedcnt = ins.get_students(cnt=True)
-    if usedcnt >= ins.get_plan()[str(ins.ins_type)]["s"]:
+    owneruser = User.query.get(ins.user_id)
+    usedcnt = 0
+    for ins in Institute.query.filter_by(id=owneruser.id).all():
+        usedcnt += ins.get_students(cnt=True)
+    if usedcnt >= owneruser.plan[str(ins.ins_type)]["s"]:
         return APIResponse.error(f"User's current plan has no capacity to add new student", 400)
     cgexists = ins.cgexists(data["campus_id"], data["grade"])
     if cgexists: return cgexists
@@ -180,7 +183,9 @@ def unarchive_student(user, data):
     usedstdcnt = Institute.query.get(data.get('id'))
     inss_typ = usedstdcnt.ins_type
     owneruser = User.query.get(usedstdcnt.user_id)
-    usedstdcnt = usedstdcnt.get_students(cnt=True)
+    usedstdcnt = 0
+    for ins in Institute.query.filter_by(id=owneruser).all():
+        usedstdcnt += ins.get_students(cnt=True)
     print(usedstdcnt, owneruser, len(stnds))
     if usedstdcnt + len(stnds) > owneruser.plan[str(inss_typ)]["s"]:
         return APIResponse.error("Students limit reached as per payment Plan, can not unarchive more students", 400)

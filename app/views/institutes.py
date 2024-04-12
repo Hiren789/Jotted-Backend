@@ -16,9 +16,9 @@ def add_institute():
         return APIResponse.error("User not found", 400)
     mfr = check_data(data, ['name', 'campus_type', 'address', 'district', 'state', 'country', 'zipcode', "ins_type", "campus_grade"])
     if mfr: return mfr
-    usedcnt = user.get_institutes(cnt=True, role_id="0")
-    if usedcnt >= user.plan[str(data.get("ins_type"))]["c"]:
-        return APIResponse.error(f"User's current plan has no capacity to add new institute", 400)
+    # usedcnt = user.get_institutes(cnt=True, role_id="0")
+    # if usedcnt >= user.plan[str(data.get("ins_type"))]["c"]:
+    #     return APIResponse.error(f"User's current plan has no capacity to add new institute", 400)
     new_institute = Institute(user_id=user.id, **data)
     db.session.add(new_institute)
     db.session.commit()
@@ -289,10 +289,11 @@ def send_institute_invite():
     institute = Institute.query.get(data.get('ins_id'))
     if not institute:
         return APIResponse.error("Institute not found", 400)
-    usedtmcnt = UserInstitute.query.filter_by(ins_id = data.get('ins_id')).count()
+    inssss = [_.id for _ in user.get_institutes(role_id="0")]
+    usedtmcnt = UserInstitute.query.filter(UserInstitute.ins_id.in_(inssss)).count()
     owneruser = User.query.get(institute.user_id)
     if usedtmcnt >= owneruser.plan[str(institute.ins_type)]["t"]:
-        return APIResponse.error(f"Team members limit reached for this institue.", 403)
+        return APIResponse.error(f"Team members limit reached for this owner.", 403)
     if user.get_access_id(data.get("ins_id"))[0] not in [0,1]:
         return APIResponse.error("User has no access to add members to this institute", 403)
     if user.get_access_id(data.get("ins_id"))[0] in [1] and data.get('role_id') in [1, '1']:
