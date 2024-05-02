@@ -42,7 +42,7 @@ def forget_password():
     user.set_password(new_password)
     db.session.commit()
     smtp_mail(user.email, "Jotted password reset", f"Your new password is {new_password}")
-    return APIResponse.success("Password emailed you successfully", 200)
+    return APIResponse.success("Success! Please check your email for additional instructions.", 200)
 
 @app.route('/reset_password', methods=['POST'])
 @jwt_required()
