@@ -2,7 +2,7 @@ from flask import request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from app import app, db
 from app.models import User, Institute, UserInstitute, Student, Goals, Notes, Todo
-from app.utils import APIResponse, check_data, random_token, profile_image_url, smtp_mail
+from app.utils import APIResponse, check_data, random_token, profile_image_url, smtp_mail, student_profile_image_url
 from app.security import access_control
 from sqlalchemy import or_, func
 
@@ -183,7 +183,7 @@ def get_institute_students(user):
     return APIResponse.success(
         "Success",
         200,
-        data={x.id: f"{x.first_name} {x.middle_name} {x.last_name}" for x in paginated_students.items},
+        data=[{"id": x.id, "name": (f"{x.first_name} {x.middle_name} {x.last_name}" if x.fn else None), "profile_pic": student_profile_image_url(x.id)} for x in paginated_students.items],
         pagination={
             'page': paginated_students.page,
             'per_page': paginated_students.per_page,
