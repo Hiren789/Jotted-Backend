@@ -289,7 +289,7 @@ def send_institute_invite():
     institute = Institute.query.get(data.get('ins_id'))
     if not institute:
         return APIResponse.error("Institute not found", 400)
-    inssss = [_.id for _ in user.get_institutes(role_id="0")]
+    inssss = [_.get('id') for _ in user.get_institutes(role_id="0")]
     usedtmcnt = UserInstitute.query.filter(UserInstitute.ins_id.in_(inssss)).count()
     owneruser = User.query.get(institute.user_id)
     if usedtmcnt >= owneruser.plan[str(institute.ins_type)]["t"]:
