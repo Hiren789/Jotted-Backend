@@ -22,6 +22,13 @@ def get_cities():
     cities_list = [city[0] for city in distinct_cities]
     return APIResponse.success("Success", 200, data=cities_list)
 
+@app.route('/get_city_suggestions', methods=['GET'])
+def get_city_suggestions():
+    search_word = request.args.get('search_word')
+    cities = City.query.filter(City.city.ilike(f'%{search_word}%')).all()
+    suggestions = [{'city': city.city, 'state': city.state, 'display': f'{city.city}, {city.state}'} for city in cities]
+    return APIResponse.success("Success", 200, data=suggestions)
+
 @app.route('/get_price_plan', methods=['POST'])
 def get_price_plan():
     data = request.get_json()
