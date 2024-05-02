@@ -183,7 +183,7 @@ def get_institute_students(user):
     return APIResponse.success(
         "Success",
         200,
-        data=[{"id": x.id, "name": (f"{x.first_name} {x.middle_name} {x.last_name}" if x.fn else None), "profile_pic": student_profile_image_url(x.id)} for x in paginated_students.items],
+        data=[{"id": x.id, "name": (f"{x.first_name} {x.middle_name} {x.last_name}" if x.first_name else None), "profile_pic": student_profile_image_url(x.id)} for x in paginated_students.items],
         pagination={
             'page': paginated_students.page,
             'per_page': paginated_students.per_page,
