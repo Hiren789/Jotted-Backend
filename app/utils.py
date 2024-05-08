@@ -34,7 +34,7 @@ def check_data(data, required_fields):
             return APIResponse.error(f"{chk.title()} is required", 400)
     return None
 
-def smtp_mail(recipient, subject, body):
+def smtp_mail(recipient, subject, body, body_type="plain"):
     sender = app.config['SMTP_MAIL']
     password = app.config['SMTP_PW']
 
@@ -43,7 +43,7 @@ def smtp_mail(recipient, subject, body):
     msg['From'] = sender
     msg['To'] = recipient
 
-    msg.attach(MIMEText(body, "plain"))
+    msg.attach(MIMEText(body, body_type))
 
     with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
         smtp_server.login(sender, password)

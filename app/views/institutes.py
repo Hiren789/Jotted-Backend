@@ -302,9 +302,20 @@ def send_institute_invite():
     new_invite = UserInstitute(ins_id = data.get('ins_id'), role_id = data.get('role_id'), token = token, students=[])
     db.session.add(new_invite)
     db.session.commit()
-    mail_subject = f'{user.fn} {user.ln} invited you to join {institute.name} on Jotted'
-    mail_body = f'Click on following link to join https://jottedonline.com/redeem-token?token={token}'
-    smtp_mail(data['email'], mail_subject, mail_body)
+    mail_subject = f'{user.fn} {user.ln} is inviting you to join {institute.name} on Jotted'
+    mail_body = f'''Hey there!<br><br>
+At Jotted, we’re all about making life easier for educational workers like you. Whether it’s managing student caseloads, collaborating with colleagues, or simply staying organized amidst the chaos, we’ve got your back!
+<br><br>
+<b>{user.fn} {user.ln}</b> is inviting you to join the team for <b>{institute.name}</b> on Jotted, and it couldn’t be easier. You can sign up for free, or choose a plan that best suits your needs.
+So go ahead, dive into the platform, explore its features, and don’t hesitate to reach out if you have any questions or need a hand getting started. We’re here for you every step of the way. and together, we’ll revolutionize the way we support students and make a real difference in their lives.
+<br><br>
+Join with this <a href='https://jottedonline.com/redeem-token?token={token}'>LINK</a><br>
+Let’s make magic happen!
+<br><br>
+<img src="{app.config.get('BACKEND_URL')}/static/email_logo.png" height="60px">
+<h3>The Jotted Team<br>
+team@jottedonline.com</h3>'''
+    smtp_mail(data['email'], mail_subject, mail_body, body_type='html')
     return APIResponse.success("Sent invite successfully", 201)
 
 @app.route('/accept_institute_invite', methods=['POST'])
