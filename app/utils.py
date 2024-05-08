@@ -40,7 +40,7 @@ def smtp_mail(recipient, subject, body, body_type="plain"):
 
     msg = MIMEMultipart()
     msg['Subject'] = subject
-    msg['From'] = sender
+    msg['From'] = f"Jotted <{sender}>"
     msg['To'] = recipient
 
     msg.attach(MIMEText(body, body_type))
