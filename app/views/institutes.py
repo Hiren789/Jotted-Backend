@@ -312,7 +312,7 @@ So go ahead, dive into the platform, explore its features, and don’t hesitate 
 Join with this <a href='https://jottedonline.com/redeem-token?token={token}'>LINK</a><br>
 Let’s make magic happen!
 <br><br>
-<img src="{app.config.get('BACKEND_URL')}/static/email_logo.png" height="60px">
+<img src="{app.config.get('BACKEND_URL')}/static/email_logo.png" height="37px">
 <h3>The Jotted Team<br>
 team@jottedonline.com</h3>'''
     smtp_mail(data['email'], mail_subject, mail_body, body_type='html')
