@@ -307,7 +307,7 @@ def send_institute_invite():
 At Jotted, we’re all about making life easier for educational workers like you. Whether it’s managing student caseloads, collaborating with colleagues, or simply staying organized amidst the chaos, we’ve got your back!
 <br><br>
 <b>{user.fn} {user.ln}</b> is inviting you to join the team for <b>{institute.name}</b> on Jotted, and it couldn’t be easier. You can sign up for free, or choose a plan that best suits your needs.
-So go ahead, dive into the platform, explore its features, and don’t hesitate to reach out if you have any questions or need a hand getting started. We’re here for you every step of the way. and together, we’ll revolutionize the way we support students and make a real difference in their lives.
+So go ahead, dive into the platform, explore its features, and don’t hesitate to reach out if you have any questions or need a hand getting started. We’re here for you every step of the way, and together, we’ll revolutionize the way we support students and make a real difference in their lives.
 <br><br>
 Join with this <a href='https://jottedonline.com/redeem-token?token={token}'>LINK</a><br>
 Let’s make magic happen!
