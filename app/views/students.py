@@ -184,7 +184,7 @@ def unarchive_student(user, data):
     inss_typ = usedstdcnt.ins_type
     owneruser = User.query.get(usedstdcnt.user_id)
     usedstdcnt = 0
-    for ins in Institute.query.filter_by(id=owneruser).all():
+    for ins in Institute.query.filter_by(id=owneruser.id).all():
         usedstdcnt += ins.get_students(cnt=True)
     print(usedstdcnt, owneruser, len(stnds))
     if usedstdcnt + len(stnds) > owneruser.plan[str(inss_typ)]["s"]:
