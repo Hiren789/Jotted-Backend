@@ -69,7 +69,7 @@ def signin():
         else:
             if user.pw and user.check_password(str(pw)):
                 access_token = create_access_token(identity=user.id)
-                last_ins = {"ins_id":user.last_ins, "role_id":user.get_access_id(user.last_ins)[0], "ins_type": Institute.query.get(user.last_ins).ins_type} if user.last_ins else {}
+                last_ins = {"ins_id":user.last_ins, "role_id":user.get_access_id(user.last_ins)[0], "ins_type": Institute.query.get(user.last_ins).ins_type} if user.last_ins and Institute.query.get(user.last_ins) else {}
                 return APIResponse.success("Signin successful", 200, access_token=access_token, pro_com=user.pro_com, last_ins=last_ins)
             else:
                 return APIResponse.error("Email or Password is incorrect", 400)
