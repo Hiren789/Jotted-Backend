@@ -75,9 +75,11 @@ def get_notes(user):
 
 @app.route('/get_note', methods=['POST'])
 @jwt_required()
-@access_control(note="")
+@access_control()
 def get_note(user, data, note):
     tmpp = note.nt_to_json()
+    if user.id not in tmpp["read_members"]+tmpp["edit_members"]:
+        return APIResponse.error("User has no access to this note", 403)
     tmpp["read_members"] = list_to_members(tmpp["read_members"])
     tmpp["edit_members"] = list_to_members(tmpp["edit_members"])
     tmpp["students"] = list_to_students(tmpp["students"])

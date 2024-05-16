@@ -103,9 +103,11 @@ def edit_todo(user, data, todo):
 
 @app.route('/get_todo', methods=['POST'])
 @jwt_required()
-@access_control(todo="")
+@access_control()
 def get_todo(user, data, todo):
     tmpp = todo.td_to_json()
+    if user.id not in tmpp["read_members"]+tmpp["edit_members"]:
+        return APIResponse.error("User has no access to this todo", 403)
     tmpp["read_members"] = list_to_members(tmpp["read_members"])
     tmpp["edit_members"] = list_to_members(tmpp["edit_members"])
     tmpp["students"] = list_to_students(tmpp["students"])
