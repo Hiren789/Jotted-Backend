@@ -23,7 +23,7 @@ def add_student():
         return APIResponse.error("User has no access to add student to this institute", 403)
     owneruser = User.query.get(ins.user_id)
     usedcnt = 0
-    for ownins in Institute.query.filter_by(id=owneruser.id).all():
+    for ownins in Institute.query.filter_by(user_id=owneruser.id).all():
         usedcnt += ownins.get_students(cnt=True)
     if usedcnt >= owneruser.plan[str(ins.ins_type)]["s"]:
         return APIResponse.error(f"User's current plan has no capacity to add new student", 400)
