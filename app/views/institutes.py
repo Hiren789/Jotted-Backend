@@ -72,7 +72,7 @@ def get_institute_team_members(user):
 
 @app.route('/get_team_members', methods=['POST'])
 @jwt_required()
-@access_control(ins_id=[0,1])
+@access_control(ins_id=[0,1,2])
 def get_team_members(user, data):
 
     page = request.args.get('page', default=1, type=int)
@@ -102,7 +102,7 @@ def get_team_members(user, data):
 
 @app.route('/get_team_member', methods=['POST'])
 @jwt_required()
-@access_control(ins_id=[0,1])
+@access_control(ins_id=[0,1,2])
 def get_team_member(user, data):
     ins_id = data["id"]
     member_id = data["member_id"]
