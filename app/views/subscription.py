@@ -12,8 +12,8 @@ def validate_new_plan(user, plan):
         return None
     if usedcnt[0]["ins_type"] != ins_type:
         return APIResponse.error(f"As user has already created one Individual or Team Institute, They can not change plan to other", 403)
-    if len(usedcnt) > plan[str(ins_type)]["c"]:
-        return APIResponse.error(f"User is already owner of more than {plan[str(ins_type)]['c']} Institutes.", 403)
+    # if len(usedcnt) > plan[str(ins_type)]["c"]:
+    #     return APIResponse.error(f"User is already owner of more than {plan[str(ins_type)]['c']} Institutes.", 403)
     insss = Institute.query.filter(Institute.id.in_([_["id"] for _ in usedcnt])).all()
     for inss in insss:
         usedstdcnt = inss.get_students(cnt=True)
