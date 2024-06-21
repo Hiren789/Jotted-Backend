@@ -181,12 +181,16 @@ def get_current_subscription():
         return APIResponse.error(f"User has no active subscription", 404)
     try:
         nsp = stripe.Invoice.upcoming(subscription=user.stripe_sub_id)
+        sub = stripe.Subscription.retrieve(id=user.stripe_sub_id)
         data = {
+            "plan_purchased": datetime.utcfromtimestamp(sub["created"]).isoformat(),
             "amount_due": nsp["amount_due"]/100,
             "next_payment_attempt": datetime.utcfromtimestamp(nsp["next_payment_attempt"]).isoformat(),
             "items": [{"description":x["description"], "amount": x["amount"]/100} for x in nsp["lines"]["data"]],
-            "currency": nsp["currency"]
+            "currency": nsp["currency"],
+            "current_plan": {"ins_type": list(user.plan.keys())[0], **list(user.plan.values())[0]}
         }
+        data["current_plan_price"] = calculate_price(int(data["current_plan"]["ins_type"]), data["current_plan"]["s"], data["current_plan"].get("t"), data["current_plan"]["d"]).get("discounted_price")
         return jsonify(data)
     except:
         return APIResponse.error(f"Failed to get Subscription details from stripe", 404)
