@@ -173,10 +173,10 @@ def edit_profile():
     if "pn" in data and User.query.filter_by(pn = data["pn"]).first():
         return APIResponse.error("Phone number is already in use", 400)
     if user.pro_com == 0:
-        mfr = check_data(data, ["pre", "fn", "mn", "ln", "suf", "pn", "gender"])
+        mfr = check_data(data, ["pre", "fn", "mn", "ln", "suf", "role", "pn", "gender"])
         if mfr: return mfr
         user.pro_com = 1
-    for i in ["pre", "fn", "mn", "ln", "suf", "pn", "gender"]:
+    for i in ["pre", "fn", "mn", "ln", "suf", "role", "pn", "gender"]:
         if i in data:
             setattr(user, i, data[i])
     db.session.commit()

@@ -91,7 +91,7 @@ def get_team_members(user, data):
     return APIResponse.success(
         "Success",
         200,
-        data=[{"id": x.id, "profile_pic": profile_image_url(x.id), "pre": f"{x.pre}", "name": f"{x.fn} {x.ln}", "suf": f"{x.suf}", "email": f"{x.email}", "pn": f"{x.pn}", "role_id": y.role_id, "students": y.students} for x, y in paginated_users.items],
+        data=[{"id": x.id, "profile_pic": profile_image_url(x.id), "pre": f"{x.pre}", "name": f"{x.fn} {x.ln}", "suf": f"{x.suf}", "role": f"{x.role}", "email": f"{x.email}", "pn": f"{x.pn}", "role_id": y.role_id, "students": y.students} for x, y in paginated_users.items],
         pagination={
             'page': paginated_users.page,
             'per_page': paginated_users.per_page,
@@ -114,7 +114,7 @@ def get_team_member(user, data):
     return APIResponse.success(
         "Success",
         200,
-        data={"id": x.id, "profile_pic": profile_image_url(x.id), "pre": f"{x.pre}", "name": f"{x.fn} {x.ln}", "suf": f"{x.suf}", "email": f"{x.email}", "pn": f"{x.pn}", "role_id": y.role_id, "students": stdss}
+        data={"id": x.id, "profile_pic": profile_image_url(x.id), "pre": f"{x.pre}", "name": f"{x.fn} {x.ln}", "suf": f"{x.suf}", "role": f"{x.role}", "email": f"{x.email}", "pn": f"{x.pn}", "role_id": y.role_id, "students": stdss}
     )
 
 @app.route('/set_access_team_members', methods=['POST'])

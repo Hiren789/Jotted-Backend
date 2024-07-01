@@ -17,6 +17,7 @@ class User(db.Model):
     mn = db.Column(db.String(128))
     ln = db.Column(db.String(128))
     suf = db.Column(db.String(8))
+    role = db.Column(db.String(256))
     gender = db.Column(db.String(16))
     email = db.Column(db.String(128), index=True, unique=True)
     pn = db.Column(db.String(15), index=True, unique=True)
@@ -51,7 +52,7 @@ class User(db.Model):
         return check_password_hash(self.pw, password)
     
     def user_profile(self):
-        return {"pre":self.pre, "fn":self.fn, "mn":self.mn, "ln":self.ln, "suf":self.suf, "gender":self.gender, "email":self.email, "pn":self.pn, "plan":self.plan, "profile_pic": profile_image_url(self.id)}
+        return {"pre":self.pre, "fn":self.fn, "mn":self.mn, "ln":self.ln, "suf":self.suf, "role":self.role, "gender":self.gender, "email":self.email, "pn":self.pn, "plan":self.plan, "profile_pic": profile_image_url(self.id)}
     
     def member_profile(self):
         return {"id":self.id, "name":f"{self.fn} {self.ln}", "profile_pic": profile_image_url(self.id)}
