@@ -53,6 +53,10 @@ def reset_password():
     user = User.query.get(current_user)
     if not user:
         return APIResponse.error("Couldn't find a user account", 400)
+    if pw == "":
+        return APIResponse.error("Can not set blank password", 403)
+    if len(pw) < 8:
+        return APIResponse.error("Password must be at least 8 characters long ", 403)
     user.set_password(pw)
     db.session.commit()
     return APIResponse.success("Password updated successfully", 200)
@@ -166,6 +170,8 @@ def edit_profile():
     data = request.get_json()
     if not user:
         return APIResponse.error("Couldn't find a user account", 400)
+    if "pn" in data and User.query.filter_by(pn = data["pn"]).first():
+        return APIResponse.error("Phone number is already in use", 400)
     if user.pro_com == 0:
         mfr = check_data(data, ["pre", "fn", "mn", "ln", "suf", "pn", "gender"])
         if mfr: return mfr
