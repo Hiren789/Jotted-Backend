@@ -170,7 +170,7 @@ def edit_profile():
     data = request.get_json()
     if not user:
         return APIResponse.error("Couldn't find a user account", 400)
-    if "pn" in data and User.query.filter_by(pn = data["pn"]).first():
+    if "pn" in data and User.query.filter(User.pn == data["pn"], User.id != current_user).first():
         return APIResponse.error("Phone number is already in use", 400)
     if user.pro_com == 0:
         mfr = check_data(data, ["pre", "fn", "mn", "ln", "suf", "role", "pn", "gender"])
